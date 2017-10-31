@@ -7,7 +7,10 @@ authors = ["Wobscale Authors"]
 log = "*"
 env_logger = "*"
 rocket = "0.3.3"
-serde_json = "*"
+rocket_contrib = { version = "0.3.3", features = ["json"] }
+serde = "1.0"
+serde_json = "1.0"
+serde_derive = "1.0"
 rocket_codegen = "0.3.3"
 diesel = { version = "0.16.0", features = ["postgres"] }
 diesel_codegen = { version = "0.16.0", features = ["postgres"] }
