@@ -2,7 +2,6 @@
 #![plugin(rocket_codegen)]
 
 extern crate rocket;
-#[macro_use]
 extern crate rocket_contrib;
 #[macro_use]
 extern crate diesel;
@@ -59,5 +58,6 @@ fn main() {
     rocket::ignite()
         .manage(pool)
         .mount("/", routes![index, test, files])
+        .mount("/user", user_routes::routes())
         .launch();
 }

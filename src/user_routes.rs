@@ -1,7 +1,12 @@
 use db;
+use rocket;
 use rocket::response::Failure;
 use rocket::http::Status;
 use rocket_contrib::Json;
+
+pub fn routes() -> Vec<rocket::Route> {
+	routes![create_user]
+}
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CreateUserRequest {
@@ -16,3 +21,4 @@ pub struct CreateUserRequest {
 pub fn create_user(conn: db::Conn, user: Json<CreateUserRequest>) -> Result<String, Failure> {
 	Err(Failure(Status::NotImplemented))
 }
+
