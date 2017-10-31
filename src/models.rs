@@ -6,11 +6,9 @@ struct NewUser<'a> {
 	email: Option<&'a str>,
 };
 
-
 #[derive(Insertable)]
-#[table_name="oauth_connections"]
-struct NewOauthConn<'a> {
-	id: i32,
-	user_id: i32,
-	connector: &'a str,
+#[table_name="github_accounts"]
+struct NewGithubAccount<'a> {
+	id: i64,
+	user_id: i64,
 }
