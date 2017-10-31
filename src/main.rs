@@ -1,7 +1,9 @@
-#![feature(plugin)]
+#![feature(plugin, custom_derive)]
 #![plugin(rocket_codegen)]
 
+extern crate rand;
 extern crate rocket;
+use rocket::http::{Cookie, Cookies};
 extern crate rocket_contrib;
 #[macro_use]
 extern crate diesel;
@@ -50,16 +52,33 @@ fn files(file: PathBuf) -> Option<NamedFile> {
 }
 
 fn main() {
+    env_logger::init();
+    let rkt = rocket::ignite();
+
+    let base_url = if rkt.config().environment.is_dev() {
+        format!("http://127.0.0.1:{}", rkt.config().port)
+    } else {
+        env::var("BASE_URL").expect("Must set BASE_URL")
+    };
+
     let pool = {
         let uri = &env::var("DATABASE_URL").expect("DATABASE_URL environment variable must be set");
         db::db_pool(uri).expect("error connecting to database")
     };
 
+    let github_oauth_config = {
+        let client_id = env::var("GITHUB_CLIENT_ID").expect("GITHUB_CLIENT_ID must be set");
+        let client_secret = env::var("GITHUB_SECRET_KEY").expect("GITHUB_SECRET_KEY must be set");
+        let github_base_url = format!("{}/{}", base_url, "github");
+        github::OauthConfig::new(client_id, client_secret, github_base_url)
+    };
+
     db::run_migrations(&pool).expect("error running migrations");
 
-    rocket::ignite()
-        .manage(pool)
+    rkt.manage(pool)
+        .manage(github_oauth_config)
         .mount("/", routes![index, test, files])
         .mount("/user", user_routes::routes())
+        .mount("/github", github::routes())
         .launch();
 }
