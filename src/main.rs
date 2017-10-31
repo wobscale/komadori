@@ -9,6 +9,7 @@ extern crate diesel;
 extern crate diesel_codegen;
 extern crate r2d2;
 extern crate r2d2_diesel;
+extern crate oauth2;
 
 extern crate serde_json;
 #[macro_use]
@@ -16,6 +17,7 @@ extern crate serde_derive;
 
 mod db;
 mod user_routes;
+mod github;
 
 use rocket::http::Status;
 use rocket::response::NamedFile;

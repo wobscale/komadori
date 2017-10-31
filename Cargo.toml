@@ -16,3 +16,4 @@ diesel = { version = "0.16.0", features = ["postgres"] }
 diesel_codegen = { version = "0.16.0", features = ["postgres"] }
 r2d2 = "*"
 r2d2-diesel = "*"
+oauth2 = "*"
