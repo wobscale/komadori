@@ -1,9 +1,12 @@
+use oauth;
 use oauth2::Config;
 use rocket::http::{Cookie, Cookies};
-use rocket_contrib::Json;
+use rocket_contrib::{Json, Value};
 use rocket::State;
+use serde_json;
 use rand::{thread_rng, Rng};
 use rocket;
+use errors::Error;
 
 pub fn routes() -> Vec<rocket::Route> {
     routes![authorize_url, handle_login]
@@ -53,27 +56,49 @@ struct GithubLoginRequest {
     state: String,
 }
 
+struct GithubLoginResponse {}
+
+impl<'a> rocket::response::Responder<'a> for GithubLoginResponse {
+    fn respond_to(self, _: &rocket::Request) -> Result<rocket::Response<'a>, rocket::http::Status> {
+        rocket::Response::build()
+            .header(rocket::http::ContentType::JSON)
+            .ok()
+    }
+}
+
+
 #[get("/login?<data>")]
 fn handle_login(
     data: GithubLoginRequest,
     mut cookies: Cookies,
     oauth: State<OauthConfig>,
-) -> Result<String, String> {
+) -> Result<GithubLoginResponse, Error> {
     let state = cookies.get_private("github_state").ok_or(
-        "Could not get state from cookie"
-            .to_owned(),
+        Error::client_error(
+            "missing state parameter"
+                .to_owned(),
+        ),
     )?;
     let state_val = state.value();
     if data.state != state_val {
-        return Err("State mismatch! Oh no!".to_string());
+        return Err(Error::client_error("state mismatch".to_owned()));
     }
 
     let token = oauth.config().exchange_code(data.code).map_err(|e| {
         error!("error exchanging code for a cookie: {}", e);
-        "Internal Oauth error".to_string()
+        Error::server_error("unable to exchange access code for a cookie".to_owned())
     })?;
 
-    // Next: find the user in the dababase, create an "anon user" if needed, return info.
+    let oauth_token_json = serde_json::to_string(&oauth::SerializableToken {
+        kind: "github".to_string(),
+        token: token,
+    }).map_err(|e| {
+        error!("error serializing: {}", e);
+        Error::server_error("error serializing token".to_owned())
+    })?;
 
-    Err("TODO return stuff".to_owned())
+    cookies.add_private(Cookie::new("oauth_token".to_string(), oauth_token_json));
+    // We have safely saved the token in a place the login route can retrieve it
+    // Our work here is done
+    Ok(GithubLoginResponse {})
 }
