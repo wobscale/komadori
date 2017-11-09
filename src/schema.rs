@@ -1,22 +1,20 @@
 // generate this file's content with `diesel print-schema`
 
-table! {
+table! {                                                  
     github_accounts (id) {
         id -> Int4,
-        user_id -> Nullable<Int4>,
+        user_id -> Int4,
         access_token -> Text,
-        avatar -> Text,
     }
 }
 
 table! {
     users (id) {
         id -> Int4,
-        uuid -> Nullable<Uuid>,
+        uuid -> Uuid,
         username -> Text,
-        display_name -> Nullable<Text>,
         role -> Nullable<Text>,
-        email -> Nullable<Text>,
+        email -> Text,
         created_at -> Timestamp,
         updated_at -> Timestamp,
     }

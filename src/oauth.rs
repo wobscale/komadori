@@ -1,3 +1,8 @@
+use rocket;
+use serde_json;
+use rocket::request::{FromRequest, Request};
+use rocket::http::Status;
+use rocket::Outcome;
 use oauth2;
 
 // Copy of oauth2::Token so we can derive for it
@@ -12,8 +17,47 @@ pub struct Token {
 }
 
 #[derive(Serialize, Deserialize)]
+pub enum Provider {
+    Github
+}
+
+impl Provider {
+    pub fn to_string(&self) -> String {
+        match self {
+            Github => "Github".to_owned()
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize)]
 pub struct SerializableToken {
-    pub kind: String,
+    pub provider: Provider,
     #[serde(with = "Token")]
     pub token: oauth2::Token,
+}
+
+impl<'a, 'r> FromRequest<'a, 'r> for SerializableToken {
+    type Error = ();
+
+    fn from_request(request: &'a Request<'r>) -> rocket::request::Outcome<SerializableToken, ()> {
+        let mut cookies = request.cookies();
+
+        let token_json = match cookies.get_private("oauth_token") {
+            Some(c) => c,
+            None => {
+                return Outcome::Forward(());
+            }
+        };
+        let token_json = token_json.value();
+
+        let token: SerializableToken = match serde_json::from_str(token_json) {
+            Ok(t) => t,
+            Err(e) => {
+                error!("could not deserialize token: {}", e);
+                return Outcome::Failure((Status::InternalServerError, ()));
+            }
+        };
+
+        return Outcome::Success(token);
+    }
 }

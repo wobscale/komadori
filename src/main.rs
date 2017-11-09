@@ -1,9 +1,11 @@
 #![feature(plugin, custom_derive)]
 #![plugin(rocket_codegen)]
 
+extern crate github_rs;
+extern crate uuid;
 extern crate rand;
 extern crate rocket;
-use rocket::http::{Cookie, Cookies};
+#[macro_use]
 extern crate rocket_contrib;
 #[macro_use]
 extern crate diesel;
@@ -12,12 +14,18 @@ extern crate diesel_codegen;
 extern crate r2d2;
 extern crate r2d2_diesel;
 extern crate oauth2;
+extern crate tera;
 
+extern crate serde;
 extern crate serde_json;
 #[macro_use]
 extern crate serde_derive;
 
+mod schema;
+mod models;
+mod errors;
 mod db;
+mod oauth;
 mod user_routes;
 mod github;
 
@@ -26,18 +34,23 @@ use rocket::response::NamedFile;
 use std::path::{Path, PathBuf};
 use diesel::prelude::*;
 use std::env;
+use rocket_contrib::Template;
+use tera::Context;
+use std::collections::HashMap;
 
 #[macro_use]
 extern crate log;
 extern crate env_logger;
 
-#[get("/")]
-fn index() -> Option<NamedFile> {
-    NamedFile::open(Path::new("static/index.html")).ok()
+// Logged out index; note the logged in index is provided by user_routes
+#[get("/", rank = 5)]
+fn index() -> Template {
+    let ctx = tera::Context::new();
+    Template::render("index", &ctx)
 }
 
 #[get("/healthz")]
-fn test(conn: db::Conn) -> Result<String, rocket::response::Failure> {
+fn healthz(conn: db::Conn) -> Result<String, rocket::response::Failure> {
     conn.execute("SELECT 1").map(|_| "healthy".into()).map_err(
         |e| {
             error!("error executing db healthcheck: {}", e);
@@ -52,7 +65,7 @@ fn files(file: PathBuf) -> Option<NamedFile> {
 }
 
 fn main() {
-    env_logger::init();
+    env_logger::init().unwrap();
     let rkt = rocket::ignite();
 
     let base_url = if rkt.config().environment.is_dev() {
@@ -75,10 +88,12 @@ fn main() {
 
     db::run_migrations(&pool).expect("error running migrations");
 
-    rkt.manage(pool)
+    rkt
+        .attach(Template::fairing())
+        .manage(pool)
         .manage(github_oauth_config)
-        .mount("/", routes![index, test, files])
-        .mount("/user", user_routes::routes())
+        .mount("/", routes![index, healthz, files])
+        .mount("/", user_routes::routes())
         .mount("/github", github::routes())
         .launch();
 }

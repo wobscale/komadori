@@ -7,14 +7,18 @@ authors = ["Wobscale Authors"]
 log = "*"
 env_logger = "*"
 rocket = "0.3.3"
-rocket_contrib = { version = "0.3.3", features = ["json"] }
+rocket_contrib = { version = "0.3.3", features = ["json", "tera_templates"] }
 serde = "1.0"
 serde_json = "1.0"
 serde_derive = "1.0"
 rocket_codegen = "0.3.3"
-diesel = { version = "0.16.0", features = ["postgres"] }
+uuid = "*"
+diesel = { version = "0.16.0", features = ["postgres", "uuid"] }
 diesel_codegen = { version = "0.16.0", features = ["postgres"] }
 r2d2 = "*"
 r2d2-diesel = "*"
 oauth2 = "*"
 rand = "*"
+dotenv = "0.10.*" # not used, but included due to https://github.com/purpliminal/rust-dotenv/issues/69
+tera = "*"
+github-rs = "0.6"

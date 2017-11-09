@@ -28,7 +28,7 @@ pub fn run_migrations(pool: &Pool) -> Result<(), String> {
     Ok(())
 }
 
-type Pool = r2d2::Pool<ConnectionManager<PgConnection>>;
+pub type Pool = r2d2::Pool<ConnectionManager<PgConnection>>;
 
 // Sourced partially from https://rocket.rs/guide/state/#databases
 pub struct Conn(r2d2::PooledConnection<ConnectionManager<PgConnection>>);
