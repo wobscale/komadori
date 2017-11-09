@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Wobscale Accounts</title>
+    </head>
+    <body>
+        <h1>Welcome {{ user.name }}</h1>
+
+        <a href="/logout">Log out</a>
+    </body>
+</html>
