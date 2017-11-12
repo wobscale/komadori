@@ -1,14 +1,12 @@
 use oauth;
 use oauth2::Config;
 use rocket::http::{Cookie, Cookies};
-use rocket_contrib::{Json, Value};
 use rocket::State;
 use rocket::response::Redirect;
 use rocket::response::Flash;
 use serde_json;
 use rand::{thread_rng, Rng};
 use rocket;
-use errors::Error;
 
 pub fn routes() -> Vec<rocket::Route> {
     routes![authorize_url, handle_login]
@@ -58,17 +56,6 @@ struct GithubLoginRequest {
     code: String,
     state: String,
 }
-
-struct GithubLoginResponse {}
-
-impl<'a> rocket::response::Responder<'a> for GithubLoginResponse {
-    fn respond_to(self, _: &rocket::Request) -> Result<rocket::Response<'a>, rocket::http::Status> {
-        rocket::Response::build()
-            .header(rocket::http::ContentType::JSON)
-            .ok()
-    }
-}
-
 
 #[get("/login?<data>")]
 fn handle_login(

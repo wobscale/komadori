@@ -5,7 +5,6 @@ extern crate github_rs;
 extern crate uuid;
 extern crate rand;
 extern crate rocket;
-#[macro_use]
 extern crate rocket_contrib;
 #[macro_use]
 extern crate diesel;

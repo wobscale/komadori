@@ -23,8 +23,8 @@ pub enum Provider {
 
 impl Provider {
     pub fn to_string(&self) -> String {
-        match self {
-            Github => "Github".to_owned(),
+        match *self {
+            Provider::Github => "Github".to_owned(),
         }
     }
 }

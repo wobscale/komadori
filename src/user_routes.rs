@@ -6,7 +6,6 @@ use diesel::Connection;
 use rocket;
 use std::time::Instant;
 use uuid::Uuid;
-use rocket::response::Failure;
 use rocket::http::Status;
 use rocket::response::{Flash, Redirect};
 use rocket_contrib::Template;
@@ -161,6 +160,7 @@ impl<'a, 'r> FromRequest<'a, 'r> for User {
                                 u.uuid
                             }
                             Err(e) => {
+                                error!("could not create partial user from partial user: {:?}", e);
                                 return Outcome::Failure((Status::InternalServerError, ()));
                             }
                         }
@@ -215,29 +215,29 @@ impl<'a, 'r> FromRequest<'a, 'r> for Partialuser {
                 let client = match Github::new(&token.token.access_token) {
                     Ok(c) => c,
                     Err(e) => {
-                        error!("could not create client");
+                        error!("could not create client: {}", e);
                         return Outcome::Failure((Status::InternalServerError, ()));
                     }
                 };
 
                 #[derive(Deserialize)]
                 struct GithubUser {
-                    email: Option<String>,
-                    name: Option<String>,
+                    _email: Option<String>,
+                    _name: Option<String>,
                     login: String,
                     id: i32,
-                    avatar_url: Option<String>,
+                    _avatar_url: Option<String>,
                 }
 
                 let user = match client.get().user().execute::<GithubUser>() {
                     Err(e) => {
-                        error!("could not get github user");
+                        error!("could not get github user: {}", e);
                         return Outcome::Failure((Status::InternalServerError, ()));
                     }
-                    Ok((headers, status, None)) => {
+                    Ok((_, _, None)) => {
                         return Outcome::Failure((Status::InternalServerError, ()));
                     }
-                    Ok((headers, status, Some(u))) => u,
+                    Ok((_, _, Some(u))) => u,
                 };
                 (user.id, user.login)
             }
