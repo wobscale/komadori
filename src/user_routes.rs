@@ -17,7 +17,7 @@ use github_rs::client::Github;
 use tera;
 
 pub fn routes() -> Vec<rocket::Route> {
-    routes![create_user, index_user, index_user_creating]
+    routes![create_user, index_user, index_user_creating, logout_user]
 }
 
 #[derive(Debug, Clone, Queryable)]
@@ -186,8 +186,11 @@ impl<'a, 'r> FromRequest<'a, 'r> for User {
 }
 
 #[get("/", rank = 0)]
-fn index_user(user: User) -> String {
-    format!("Hello {}", user.username)
+fn index_user(user: User) -> Template {
+    let mut ctx = tera::Context::new();
+    ctx.add("csrf", &"TODO");
+    ctx.add("username", &user.username);
+    Template::render("user/index", ctx)
 }
 
 pub struct Partialuser {
@@ -328,4 +331,11 @@ pub fn create_user(
             )
         }
     }
+}
+
+#[get("/user/logout")]
+pub fn logout_user(mut cookies: Cookies) -> Flash<Redirect> {
+    cookies.remove_private(Cookie::named("oauth_token"));
+    cookies.remove_private(Cookie::named("user_uuid"));
+    Flash::success(Redirect::to("/"), "Logged out")
 }
