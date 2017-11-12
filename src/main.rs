@@ -22,7 +22,6 @@ extern crate serde_derive;
 
 mod schema;
 mod models;
-mod errors;
 mod db;
 mod oauth;
 mod user_routes;
