@@ -34,13 +34,13 @@ use rocket::response::NamedFile;
 use std::path::{Path, PathBuf};
 use diesel::prelude::*;
 use std::env;
+use std::time::Instant;
 use rocket_contrib::Template;
-use tera::Context;
-use std::collections::HashMap;
 
 #[macro_use]
 extern crate log;
-extern crate env_logger;
+extern crate fern;
+extern crate chrono;
 
 // Logged out index; note the logged in index is provided by user_routes
 #[get("/", rank = 5)]
@@ -65,7 +65,19 @@ fn files(file: PathBuf) -> Option<NamedFile> {
 }
 
 fn main() {
-    env_logger::init().unwrap();
+    fern::Dispatch::new()
+        .format(|out, message, record| {
+            out.finish(format_args!(
+                "{}[{}]\t[{}]\t {}",
+                chrono::Local::now().format("[%Y-%m-%d][%H:%M:%S]"),
+                record.target(),
+                record.level(),
+                message
+            ))
+        })
+        .level(log::LogLevelFilter::Warn)
+        .chain(std::io::stdout())
+        .apply().unwrap();
     let rkt = rocket::ignite();
 
     let base_url = if rkt.config().environment.is_dev() {
@@ -86,7 +98,11 @@ fn main() {
         github::OauthConfig::new(client_id, client_secret, github_base_url)
     };
 
-    db::run_migrations(&pool).expect("error running migrations");
+    { 
+        let timer = Instant::now();
+        db::run_migrations(&pool).expect("error running migrations");
+        debug!("running migrations took {}", (timer.elapsed().as_secs() as f64 + timer.elapsed().subsec_nanos() as f64 * 1e-9));
+    }
 
     rkt
         .attach(Template::fairing())

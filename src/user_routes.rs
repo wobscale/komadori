@@ -4,6 +4,7 @@ use oauth;
 use diesel;
 use diesel::Connection;
 use rocket;
+use std::time::Instant;
 use uuid::Uuid;
 use rocket::response::Failure;
 use rocket::http::Status;
@@ -31,25 +32,106 @@ pub struct User {
     _updated: std::time::SystemTime,
 }
 
+#[derive(Debug, Clone, Queryable)]
+pub struct GithubUser {
+    pub _id: i32,
+    user_id: i32,
+    access_token: String,
+}
+
+#[derive(Debug)]
+enum GetUserError {
+    DbError(diesel::result::Error),
+    NoSuchUser,
+}
+
+impl User {
+    fn from_uuid(conn: &diesel::PgConnection, uuid_: Uuid) -> Result<Self, GetUserError> {
+        use diesel::prelude::*;
+        use schema::users::dsl::*;
+        match users.filter(uuid.eq(uuid_))
+            .limit(1)
+            .load::<User>(conn) {
+                Ok(u) => {
+                    match u.first() {
+                        Some(u) =>  {
+                            Ok(u.clone())
+                        },
+                        None => {
+                            error!("error getting user {}", uuid_);
+                            Err(GetUserError::NoSuchUser)
+                        }
+                    }
+                },
+                Err(e) => {
+                    error!("error getting user {}", uuid_);
+                    Err(GetUserError::DbError(e))
+                }
+            }
+    }
+    fn from_partial_user(conn: &diesel::PgConnection, pu: Partialuser) -> Result<Self, GetUserError> {
+        // Compile-check that we can assume github's the only provider
+        match pu.provider {
+            oauth::Provider::Github => ()
+        };
+
+        use diesel::prelude::*;
+        use schema::github_accounts;
+        use schema::users::dsl::*;
+        match {
+            let timer = Instant::now();
+            let res = users.inner_join(github_accounts::table)
+            .select(users::all_columns())
+            .filter(github_accounts::id.eq(pu.provider_id))
+            .limit(1)
+            .load::<User>(conn) ;
+            debug!("Partial user to user query took {}", (timer.elapsed().as_secs() as f64 + timer.elapsed().subsec_nanos() as f64 * 1e-9));
+            res
+        } {
+                Ok(u) => {
+                    match u.first() {
+                        Some(u) =>  {
+                            Ok(u.clone())
+                        },
+                        None => {
+                            Err(GetUserError::NoSuchUser)
+                        }
+                    }
+                },
+                Err(e) => {
+                    Err(GetUserError::DbError(e))
+                }
+            }
+    }
+}
+
+
 impl<'a, 'r> FromRequest<'a, 'r> for User {
     type Error = ();
 
-    fn from_request(request: &'a Request<'r>) -> rocket::request::Outcome<User, ()> {
-        let mut cookies = request.cookies();
-        let cookie_uuid = match cookies.get_private("user_uuid") {
-            Some(uuid) => {
-                match Uuid::parse_str(&uuid.value()) {
-                    Ok(u) => u,
-                    Err(e) => {
-                        error!("could not decode user's uuid: {}", e);
-                        return Outcome::Failure((Status::InternalServerError, ()));
+    fn from_request(request: &'a Request<'r>) -> rocket::request::Outcome<Self, ()> {
+        let uuid_ = {
+            // ensure cookies is dropped before the Partialuser::from_request so we don't error out
+            // on too many cookies
+            let mut cookies = request.cookies();
+            match cookies.get_private("user_uuid") {
+                Some(uuid) => {
+                    debug!("got user_uuid from cookie: {}", uuid);
+                    match Uuid::parse_str(&uuid.value()) {
+                        Ok(u) => Some(u),
+                        Err(e) => {
+                            error!("could not decode user's uuid: {}", e);
+                            return Outcome::Failure((Status::InternalServerError, ()));
+                        }
                     }
                 }
-            }
-            None => {
-                return Outcome::Forward(());
+                None => {
+                    debug!("cookie had no user_uuid");
+                    None
+                }
             }
         };
+
         let db = request.guard::<rocket::State<db::Pool>>()?;
         let db = match db.get() {
             Ok(db) => db,
@@ -58,30 +140,48 @@ impl<'a, 'r> FromRequest<'a, 'r> for User {
                 return Outcome::Failure((Status::InternalServerError, ()));
             },
         };
-        {
-            use diesel::prelude::*;
-            use schema::users::dsl::*;
-            match users.filter(uuid.eq(cookie_uuid))
-                .limit(1)
-                .load::<User>(&*db) {
-                    Ok(u) => {
-                        match u.first() {
-                            Some(u) =>  {
-                                return Outcome::Success(u.clone());
-                            },
-                            None => {
-                                error!("error getting user {}", cookie_uuid);
+
+        let uuid_ = match uuid_ {
+            Some(u) => u,
+            None => {
+                // If we have a github oauth login thing going, let's try that
+                debug!("attempting to get uuid from partial-user");
+                match Partialuser::from_request(request) {
+                    Outcome::Success(pu) => {
+                        match User::from_partial_user(&*db, pu) {
+                            Ok(u) => {
+                                // We should also save this user in the cookie to avoid the
+                                // from_partial_user next time
+                                // TODO: this is absolutely the wrong place code-organization-wise to do this
+                                { 
+                                    let mut cookies = request.cookies();
+                                    cookies.add_private(Cookie::new("user_uuid".to_owned(), u.uuid.simple().to_string()));
+                                }
+                                u.uuid
+                            }
+                            Err(e) => {
                                 return Outcome::Failure((Status::InternalServerError, ()));
                             }
                         }
+                    }
+                    Outcome::Forward(()) => {
+                        return Outcome::Forward(())
                     },
-                    Err(e) => {
-                        error!("error getting user {}", cookie_uuid);
-                        return Outcome::Failure((Status::InternalServerError, ()));
+                    Outcome::Failure(e) => {
+                        return Outcome::Failure(e);
                     }
                 }
+            }
+        };
+        match User::from_uuid(&*db, uuid_) {
+            Err(e) => {
+                error!("error using uuid to get user: {:?}", e);
+                Outcome::Failure((Status::InternalServerError, ()))
+            }
+            Ok(u) => {
+                Outcome::Success(u)
+            }
         }
-        return Outcome::Forward(());
     }
 }
 
@@ -91,7 +191,7 @@ fn index_user(user: User) -> String {
 }
 
 pub struct Partialuser {
-    provider: String,
+    provider: oauth::Provider,
     provider_id: i32,
     provider_name: String,
     access_token: String,
@@ -144,7 +244,7 @@ impl<'a, 'r> FromRequest<'a, 'r> for Partialuser {
             }
         };
         Outcome::Success(Partialuser{
-            provider: token.provider.to_string(),
+            provider: token.provider,
             provider_id: uid,
             provider_name: name,
             access_token: token.token.access_token,
@@ -156,7 +256,7 @@ impl<'a, 'r> FromRequest<'a, 'r> for Partialuser {
 fn index_user_creating(user: Partialuser) -> Template {
     let mut ctx = tera::Context::new();
     ctx.add("csrf", &"TODO");
-    ctx.add("oauth_provider", &user.provider);
+    ctx.add("oauth_provider", &user.provider.to_string());
     ctx.add("oauth_account_name", &user.provider_name);
     Template::render("partial_user/index", ctx)
 }
@@ -183,6 +283,11 @@ pub fn create_user(
     if req.email.len() == 0 {
         return Flash::error(Redirect::to("/"), "Email cannot be blank");
     }
+
+    // Compile-check that we can assume github's the only provider
+    match user.provider {
+        oauth::Provider::Github => ()
+    };
 
     // TODO: error handling
     let create_res = (&*conn).transaction::<_, diesel::result::Error, _>(|| {
