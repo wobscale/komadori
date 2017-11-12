@@ -156,6 +156,7 @@ impl<'a, 'r> FromRequest<'a, 'r> for User {
                                         "user_uuid".to_owned(),
                                         u.uuid.simple().to_string(),
                                     ));
+                                    cookies.remove_private(Cookie::named("oauth_token"));
                                 }
                                 u.uuid
                             }
@@ -316,6 +317,7 @@ pub fn create_user(
                 "user_uuid".to_owned(),
                 newuser.uuid.simple().to_string(),
             ));
+            cookies.remove_private(Cookie::named("oauth_token"));
             Flash::success(Redirect::to("/"), "Account created")
         }
         Err(e) => {
