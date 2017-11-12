@@ -49,30 +49,29 @@ impl User {
     fn from_uuid(conn: &diesel::PgConnection, uuid_: Uuid) -> Result<Self, GetUserError> {
         use diesel::prelude::*;
         use schema::users::dsl::*;
-        match users.filter(uuid.eq(uuid_))
-            .limit(1)
-            .load::<User>(conn) {
-                Ok(u) => {
-                    match u.first() {
-                        Some(u) =>  {
-                            Ok(u.clone())
-                        },
-                        None => {
-                            error!("error getting user {}", uuid_);
-                            Err(GetUserError::NoSuchUser)
-                        }
+        match users.filter(uuid.eq(uuid_)).limit(1).load::<User>(conn) {
+            Ok(u) => {
+                match u.first() {
+                    Some(u) => Ok(u.clone()),
+                    None => {
+                        error!("error getting user {}", uuid_);
+                        Err(GetUserError::NoSuchUser)
                     }
-                },
-                Err(e) => {
-                    error!("error getting user {}", uuid_);
-                    Err(GetUserError::DbError(e))
                 }
             }
+            Err(e) => {
+                error!("error getting user {}", uuid_);
+                Err(GetUserError::DbError(e))
+            }
+        }
     }
-    fn from_partial_user(conn: &diesel::PgConnection, pu: Partialuser) -> Result<Self, GetUserError> {
+    fn from_partial_user(
+        conn: &diesel::PgConnection,
+        pu: Partialuser,
+    ) -> Result<Self, GetUserError> {
         // Compile-check that we can assume github's the only provider
         match pu.provider {
-            oauth::Provider::Github => ()
+            oauth::Provider::Github => (),
         };
 
         use diesel::prelude::*;
@@ -80,28 +79,26 @@ impl User {
         use schema::users::dsl::*;
         match {
             let timer = Instant::now();
-            let res = users.inner_join(github_accounts::table)
-            .select(users::all_columns())
-            .filter(github_accounts::id.eq(pu.provider_id))
-            .limit(1)
-            .load::<User>(conn) ;
-            debug!("Partial user to user query took {}", (timer.elapsed().as_secs() as f64 + timer.elapsed().subsec_nanos() as f64 * 1e-9));
+            let res = users
+                .inner_join(github_accounts::table)
+                .select(users::all_columns())
+                .filter(github_accounts::id.eq(pu.provider_id))
+                .limit(1)
+                .load::<User>(conn);
+            debug!(
+                "Partial user to user query took {}",
+                (timer.elapsed().as_secs() as f64 + timer.elapsed().subsec_nanos() as f64 * 1e-9)
+            );
             res
         } {
-                Ok(u) => {
-                    match u.first() {
-                        Some(u) =>  {
-                            Ok(u.clone())
-                        },
-                        None => {
-                            Err(GetUserError::NoSuchUser)
-                        }
-                    }
-                },
-                Err(e) => {
-                    Err(GetUserError::DbError(e))
+            Ok(u) => {
+                match u.first() {
+                    Some(u) => Ok(u.clone()),
+                    None => Err(GetUserError::NoSuchUser),
                 }
             }
+            Err(e) => Err(GetUserError::DbError(e)),
+        }
     }
 }
 
@@ -138,7 +135,7 @@ impl<'a, 'r> FromRequest<'a, 'r> for User {
             Err(e) => {
                 error!("error getting db: {}", e);
                 return Outcome::Failure((Status::InternalServerError, ()));
-            },
+            }
         };
 
         let uuid_ = match uuid_ {
@@ -152,10 +149,14 @@ impl<'a, 'r> FromRequest<'a, 'r> for User {
                             Ok(u) => {
                                 // We should also save this user in the cookie to avoid the
                                 // from_partial_user next time
-                                // TODO: this is absolutely the wrong place code-organization-wise to do this
-                                { 
+                                // TODO: this is absolutely the wrong place code-organization-wise
+                                // to do this
+                                {
                                     let mut cookies = request.cookies();
-                                    cookies.add_private(Cookie::new("user_uuid".to_owned(), u.uuid.simple().to_string()));
+                                    cookies.add_private(Cookie::new(
+                                        "user_uuid".to_owned(),
+                                        u.uuid.simple().to_string(),
+                                    ));
                                 }
                                 u.uuid
                             }
@@ -166,7 +167,7 @@ impl<'a, 'r> FromRequest<'a, 'r> for User {
                     }
                     Outcome::Forward(()) => {
                         return Outcome::Forward(())
-                    },
+                    }
                     Outcome::Failure(e) => {
                         return Outcome::Failure(e);
                     }
@@ -178,9 +179,7 @@ impl<'a, 'r> FromRequest<'a, 'r> for User {
                 error!("error using uuid to get user: {:?}", e);
                 Outcome::Failure((Status::InternalServerError, ()))
             }
-            Ok(u) => {
-                Outcome::Success(u)
-            }
+            Ok(u) => Outcome::Success(u),
         }
     }
 }
@@ -205,7 +204,7 @@ impl<'a, 'r> FromRequest<'a, 'r> for Partialuser {
             Outcome::Success(token) => token,
             Outcome::Forward(()) => {
                 return Outcome::Forward(());
-            },
+            }
             Outcome::Failure(e) => {
                 return Outcome::Failure(e);
             }
@@ -234,16 +233,16 @@ impl<'a, 'r> FromRequest<'a, 'r> for Partialuser {
                     Err(e) => {
                         error!("could not get github user");
                         return Outcome::Failure((Status::InternalServerError, ()));
-                    },
+                    }
                     Ok((headers, status, None)) => {
                         return Outcome::Failure((Status::InternalServerError, ()));
-                    },
+                    }
                     Ok((headers, status, Some(u))) => u,
                 };
                 (user.id, user.login)
             }
         };
-        Outcome::Success(Partialuser{
+        Outcome::Success(Partialuser {
             provider: token.provider,
             provider_id: uid,
             provider_name: name,
@@ -286,7 +285,7 @@ pub fn create_user(
 
     // Compile-check that we can assume github's the only provider
     match user.provider {
-        oauth::Provider::Github => ()
+        oauth::Provider::Github => (),
     };
 
     // TODO: error handling
@@ -296,27 +295,35 @@ pub fn create_user(
         use schema::users::dsl::*;
         use schema::github_accounts::dsl::*;
         use models::{NewUser, NewGithubAccount};
-        let newuser: User = diesel::insert(&NewUser{
+        let newuser: User = diesel::insert(&NewUser {
             username: &req.username,
             email: &req.email,
-        }).into(users).get_result(&*conn)?;
+        }).into(users)
+            .get_result(&*conn)?;
 
-        diesel::insert(&NewGithubAccount{
+        diesel::insert(&NewGithubAccount {
             id: user.provider_id,
             user_id: newuser._id,
             access_token: &user.access_token,
-        }).into(github_accounts).execute(&*conn)?;
+        }).into(github_accounts)
+            .execute(&*conn)?;
 
         Ok((newuser))
     });
     match create_res {
         Ok(newuser) => {
-            cookies.add_private(Cookie::new("user_uuid".to_owned(), newuser.uuid.simple().to_string()));
+            cookies.add_private(Cookie::new(
+                "user_uuid".to_owned(),
+                newuser.uuid.simple().to_string(),
+            ));
             Flash::success(Redirect::to("/"), "Account created")
-        },
+        }
         Err(e) => {
             error!("error creating user account: {}", e);
-            Flash::error(Redirect::to("/"), "Could not create account for some reason")
+            Flash::error(
+                Redirect::to("/"),
+                "Could not create account for some reason",
+            )
         }
     }
 }

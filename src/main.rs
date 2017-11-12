@@ -77,7 +77,8 @@ fn main() {
         })
         .level(log::LogLevelFilter::Warn)
         .chain(std::io::stdout())
-        .apply().unwrap();
+        .apply()
+        .unwrap();
     let rkt = rocket::ignite();
 
     let base_url = if rkt.config().environment.is_dev() {
@@ -98,14 +99,16 @@ fn main() {
         github::OauthConfig::new(client_id, client_secret, github_base_url)
     };
 
-    { 
+    {
         let timer = Instant::now();
         db::run_migrations(&pool).expect("error running migrations");
-        debug!("running migrations took {}", (timer.elapsed().as_secs() as f64 + timer.elapsed().subsec_nanos() as f64 * 1e-9));
+        debug!(
+            "running migrations took {}",
+            (timer.elapsed().as_secs() as f64 + timer.elapsed().subsec_nanos() as f64 * 1e-9)
+        );
     }
 
-    rkt
-        .attach(Template::fairing())
+    rkt.attach(Template::fairing())
         .manage(pool)
         .manage(github_oauth_config)
         .mount("/", routes![index, healthz, files])

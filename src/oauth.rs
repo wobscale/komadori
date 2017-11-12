@@ -18,13 +18,13 @@ pub struct Token {
 
 #[derive(Serialize, Deserialize)]
 pub enum Provider {
-    Github
+    Github,
 }
 
 impl Provider {
     pub fn to_string(&self) -> String {
         match self {
-            Github => "Github".to_owned()
+            Github => "Github".to_owned(),
         }
     }
 }

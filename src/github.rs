@@ -80,7 +80,7 @@ fn handle_login(
         Some(c) => c,
         None => {
             return Flash::error(Redirect::to("/"), "missing state cookie");
-        },
+        }
     };
     cookies.remove_private(Cookie::named("github_state"));
     let state_val = state.value();
@@ -92,8 +92,11 @@ fn handle_login(
         Ok(t) => t,
         Err(e) => {
             error!("error exchanging code for a cookie: {}", e);
-            return Flash::error(Redirect::to("/"), "unable to exchange access code for a cookie");
-        },
+            return Flash::error(
+                Redirect::to("/"),
+                "unable to exchange access code for a cookie",
+            );
+        }
     };
 
     let oauth_token_json = match serde_json::to_string(&oauth::SerializableToken {

@@ -1,6 +1,6 @@
 // generate this file's content with `diesel print-schema`
 
-table! {                                                  
+table! {
     github_accounts (id) {
         id -> Int4,
         user_id -> Int4,
