@@ -75,6 +75,8 @@ fn main() {
             ))
         })
         .level(log::LogLevelFilter::Warn)
+        .level_for("rocket", log::LogLevelFilter::Info)
+        .level_for("komadori", log::LogLevelFilter::Info)
         .chain(std::io::stdout())
         .apply()
         .unwrap();
