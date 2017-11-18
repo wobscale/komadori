@@ -1,4 +1,7 @@
 import React, { Component } from 'react';
+
+import GithubLogin from './github-login-component';
+
 import logo from './logo.svg';
 import './App.css';
 
@@ -13,9 +16,10 @@ class App extends Component {
         <p className="App-intro">
           Login to your Wobscale Account
         </p>
+        <GithubLogin />
 
         <h2>Create an account</h2>
-        <p> If you don't have an account yet, you can create one</p>
+        <p> If you don't have an account yet, login to create one </p>
       </div>
     );
   }
