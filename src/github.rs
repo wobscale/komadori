@@ -9,7 +9,7 @@ use rand::{thread_rng, Rng};
 use rocket;
 
 pub fn routes() -> Vec<rocket::Route> {
-    routes![authorize_url, handle_login]
+    routes![get_authorize_url, authorize_url, handle_login]
 }
 
 pub struct OauthConfig {
@@ -31,7 +31,7 @@ impl OauthConfig {
     }
 
     fn config(&self) -> Config {
-        let redir_url = format!("{}/{}", self.base_url.trim_right_matches('/'), "login");
+        let redir_url = format!("{}/{}", self.base_url.trim_right_matches('/'), "github/oauth");
         Config::new(
             self.client_id.clone(),
             self.client_secret.clone(),
@@ -49,6 +49,15 @@ pub fn authorize_url(mut cookies: Cookies, oauth: State<OauthConfig>) -> Redirec
     let oauth_url = oauth.config().set_state(state).authorize_url().to_string();
 
     Redirect::to(&oauth_url)
+}
+
+#[get("/authorize_url")]
+pub fn get_authorize_url(mut cookies: Cookies, oauth: State<OauthConfig>) -> String {
+    let state: String = thread_rng().gen_ascii_chars().take(16).collect();
+    cookies.add_private(Cookie::new("github_state".to_owned(), state.clone()));
+    let oauth_url = oauth.config().set_state(state).authorize_url().to_string();
+
+    oauth_url
 }
 
 #[derive(FromForm)]
