@@ -11,14 +11,14 @@ class GithubLogin extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            loggingIn: false,
+            oauthState: 0,
         };
         this.loginClick = this.loginClick.bind(this);
     }
 
     loginClick() {
         this.setState(prev => ({
-            loggingIn: true,
+            oauthState: 1,
         }));
         // Stolen partially from 
         // https://github.com/rust-lang/crates.io/blob/e8cae0e872be4edf02f0876db4e85c082e70ecc9/app/routes/login.js#L14-L40
@@ -41,25 +41,42 @@ class GithubLogin extends Component {
         ].join(',');
         let win = window.open("/github/oauth", "Github Authorization", windowDimensions);
 
-        let waitClosed = window.setInterval(() => {
-          if(!win.closed) {
-            return;
-          }
-          window.clearInterval(waitClosed);
-          if (window.github_response) {
-            console.log(window.github_response);
-          }
+        new Promise((resolve, reject) => {
+          let waitClosed = window.setInterval(() => {
+            if(!win.closed) {
+              return;
+            }
+            window.clearInterval(waitClosed);
+            if (window.github_response) {
+              resolve(window.github_response);
+            } else {
+              reject("did not get github_response");
+            }
+          }, 200);
+        }).then((resp) => {
           this.setState(prev => ({
-              loggingIn: false,
+              oauthState: 2,
           }));
-        }, 200);
+          console.log(resp)
+        }).catch((err) => {
+          this.setState(prev => ({
+              oauthState: 0,
+          }));
+          alert(err);
+        });
     }
 
     render() {
-        if(this.state.loggingIn) {
+        if(this.state.oauthState === 1) {
             return (
                 <div className="logging-in">
                     <p>Please complete the login in the new window...</p>
+                </div>
+            );
+        } else if (this.state.oauthState === 2) {
+            return (
+                <div className="logging-in">
+                    <p>Verifying your login...</p>
                 </div>
             );
         } else {
