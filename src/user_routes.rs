@@ -8,14 +8,14 @@ use rocket_contrib::json::Json;
 use std::time::Instant;
 use uuid::Uuid;
 use rocket::http::Status;
-use rocket::response::{Flash, Redirect};
 use rocket_contrib::Template;
 use rocket::Outcome;
-use rocket::request::{FromRequest, Request, Form};
+use rocket::request::{FromRequest, Request};
 use rocket::http::{Cookie, Cookies};
 use github_rs::client::Executor;
 use github_rs::client::Github;
 use tera;
+use errors::Error;
 
 pub fn routes() -> Vec<rocket::Route> {
     routes![create_user, index_user, index_user_creating, logout_user]
@@ -271,18 +271,26 @@ pub struct CreateUserRequest {
     email: String,
 }
 
+#[derive(Debug, Serialize)]
+pub struct UserResp {
+    pub uuid: String,
+    pub username: String,
+    pub role: Option<String>,
+    pub email: String,
+}
+
 #[post("/user/create", format = "application/json", data = "<req>")]
 pub fn create_user(
     conn: db::Conn,
     user: Partialuser,
     req: Json<CreateUserRequest>,
     mut cookies: Cookies,
-) -> Flash<Redirect> {
+) -> Json<Result<UserResp, Error>> {
     if req.username.len() == 0 {
-        return Flash::error(Redirect::to("/"), "Name cannot be blank");
+        return Json(Err(Error::client_error("Name cannot be blank".to_string())));
     }
     if req.email.len() == 0 {
-        return Flash::error(Redirect::to("/"), "Email cannot be blank");
+        return Json(Err(Error::client_error("Email cannot be blank".to_string())));
     }
 
     // Compile-check that we can assume github's the only provider
@@ -290,7 +298,8 @@ pub fn create_user(
         oauth::Provider::Github => (),
     };
 
-    // TODO: error handling
+    // TODO: error handling, e.g. detect client vs server errors (such as uniqueness constraints
+    // being client, and db conn errs being server)
     let create_res = (&*conn).transaction::<_, diesel::result::Error, _>(|| {
         use diesel;
         use diesel::prelude::*;
@@ -319,14 +328,16 @@ pub fn create_user(
                 newuser.uuid.simple().to_string(),
             ));
             cookies.remove_private(Cookie::named("oauth_token"));
-            Flash::success(Redirect::to("/"), "Account created")
+            Json(Ok(UserResp{
+                username: newuser.username,
+                email: newuser.email,
+                role: None,
+                uuid: newuser.uuid.simple().to_string(),
+            }))
         }
         Err(e) => {
             error!("error creating user account: {}", e);
-            Flash::error(
-                Redirect::to("/"),
-                "Could not create account for some reason",
-            )
+            Json(Err(Error::server_error("Could not create account: please contact the administrator if this persists".to_string())))
         }
     }
 }
