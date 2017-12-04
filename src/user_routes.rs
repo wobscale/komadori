@@ -4,6 +4,7 @@ use oauth;
 use diesel;
 use diesel::Connection;
 use rocket;
+use rocket_contrib::json::Json;
 use std::time::Instant;
 use uuid::Uuid;
 use rocket::http::Status;
@@ -264,22 +265,19 @@ fn index_user_creating(user: Partialuser) -> Template {
     Template::render("partial_user/index", ctx)
 }
 
-#[derive(Debug, Serialize, Deserialize, FromForm)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct CreateUserRequest {
     username: String,
     email: String,
 }
 
-
-
-#[post("/user/create", data = "<form>")]
+#[post("/user/create", format = "application/json", data = "<req>")]
 pub fn create_user(
     conn: db::Conn,
     user: Partialuser,
-    form: Form<CreateUserRequest>,
+    req: Json<CreateUserRequest>,
     mut cookies: Cookies,
 ) -> Flash<Redirect> {
-    let req = form.get();
     if req.username.len() == 0 {
         return Flash::error(Redirect::to("/"), "Name cannot be blank");
     }
@@ -333,9 +331,12 @@ pub fn create_user(
     }
 }
 
+#[derive(Serialize)]
+pub struct UserLogoutResponse {}
+
 #[get("/user/logout")]
-pub fn logout_user(mut cookies: Cookies) -> Flash<Redirect> {
+pub fn logout_user(mut cookies: Cookies) -> Json<UserLogoutResponse> {
     cookies.remove_private(Cookie::named("oauth_token"));
     cookies.remove_private(Cookie::named("user_uuid"));
-    Flash::success(Redirect::to("/"), "Logged out")
+    Json(UserLogoutResponse{})
 }
