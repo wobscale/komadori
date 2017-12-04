@@ -30,7 +30,7 @@ impl OauthConfig {
         }
     }
 
-    fn config(&self) -> Config {
+    pub fn config(&self) -> Config {
         let redir_url = format!("{}/{}", self.base_url.trim_right_matches('/'), "github/oauth");
         Config::new(
             self.client_id.clone(),

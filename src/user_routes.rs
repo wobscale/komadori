@@ -4,21 +4,21 @@ use oauth;
 use diesel;
 use diesel::Connection;
 use rocket;
+use rocket::State;
 use rocket_contrib::json::Json;
 use std::time::Instant;
 use uuid::Uuid;
 use rocket::http::Status;
-use rocket_contrib::Template;
 use rocket::Outcome;
 use rocket::request::{FromRequest, Request};
 use rocket::http::{Cookie, Cookies};
 use github_rs::client::Executor;
 use github_rs::client::Github;
-use tera;
+use github;
 use errors::Error;
 
 pub fn routes() -> Vec<rocket::Route> {
-    routes![create_user, index_user, index_user_creating, logout_user]
+    routes![create_user, logout_user, auth_user]
 }
 
 #[derive(Debug, Clone, Queryable)]
@@ -67,7 +67,7 @@ impl User {
     }
     fn from_partial_user(
         conn: &diesel::PgConnection,
-        pu: Partialuser,
+        pu: PartialUser,
     ) -> Result<Self, GetUserError> {
         // Compile-check that we can assume github's the only provider
         match pu.provider {
@@ -108,7 +108,7 @@ impl<'a, 'r> FromRequest<'a, 'r> for User {
 
     fn from_request(request: &'a Request<'r>) -> rocket::request::Outcome<Self, ()> {
         let uuid_ = {
-            // ensure cookies is dropped before the Partialuser::from_request so we don't error out
+            // ensure cookies is dropped before the PartialUser::from_request so we don't error out
             // on too many cookies
             let mut cookies = request.cookies();
             match cookies.get_private("user_uuid") {
@@ -143,7 +143,7 @@ impl<'a, 'r> FromRequest<'a, 'r> for User {
             None => {
                 // If we have a github oauth login thing going, let's try that
                 debug!("attempting to get uuid from partial-user");
-                match Partialuser::from_request(request) {
+                match PartialUser::from_request(request) {
                     Outcome::Success(pu) => {
                         match User::from_partial_user(&*db, pu) {
                             Ok(u) => {
@@ -186,22 +186,15 @@ impl<'a, 'r> FromRequest<'a, 'r> for User {
     }
 }
 
-#[get("/", rank = 0)]
-fn index_user(user: User) -> Template {
-    let mut ctx = tera::Context::new();
-    ctx.add("csrf", &"TODO");
-    ctx.add("username", &user.username);
-    Template::render("user/index", ctx)
-}
-
-pub struct Partialuser {
+#[derive(Serialize)]
+pub struct PartialUser {
     provider: oauth::Provider,
     provider_id: i32,
     provider_name: String,
     access_token: String,
 }
 
-impl<'a, 'r> FromRequest<'a, 'r> for Partialuser {
+impl<'a, 'r> FromRequest<'a, 'r> for PartialUser {
     type Error = ();
 
     fn from_request(request: &'a Request<'r>) -> rocket::request::Outcome<Self, ()> {
@@ -247,22 +240,13 @@ impl<'a, 'r> FromRequest<'a, 'r> for Partialuser {
                 (user.id, user.login)
             }
         };
-        Outcome::Success(Partialuser {
+        Outcome::Success(PartialUser {
             provider: token.provider,
             provider_id: uid,
             provider_name: name,
             access_token: token.token.access_token,
         })
     }
-}
-
-#[get("/", rank = 1)]
-fn index_user_creating(user: Partialuser) -> Template {
-    let mut ctx = tera::Context::new();
-    ctx.add("csrf", &"TODO");
-    ctx.add("oauth_provider", &user.provider.to_string());
-    ctx.add("oauth_account_name", &user.provider_name);
-    Template::render("partial_user/index", ctx)
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -279,10 +263,87 @@ pub struct UserResp {
     pub email: String,
 }
 
+#[derive(Debug, Deserialize)]
+struct GithubLoginRequest {
+    code: String,
+    state: String,
+}
+
+#[derive(Deserialize)]
+#[serde(tag = "provider")]
+pub enum AuthUserRequest {
+    github(GithubLoginRequest),
+}
+
+#[derive(Serialize)]
+#[serde(tag = "type")]
+pub enum AuthUserResp {
+    UserResp(UserResp),
+    PartialUser(PartialUser),
+}
+
+#[post("/user/auth", format = "application/json", data = "<req>")]
+pub fn auth_user(
+    conn: db::Conn,
+    req: Json<AuthUserRequest>,
+    github_oauth: State<github::OauthConfig>,
+) -> Json<Result<AuthUserResp, Error>> {
+    match req.0 {
+        AuthUserRequest::github(g) => {
+            // We got github oauth tokens, exchange it for an access code
+            let token = match github_oauth.config().exchange_code(g.code.clone()) {
+                Ok(t) => t,
+                Err(e) => {
+                    error!("github exchange code error: {}", e);
+                    return Json(Err(Error::client_error("could not exchange code".to_string())));
+                }
+            };
+
+            let client = match Github::new(&token.access_token) {
+                Ok(c) => c,
+                Err(e) => {
+                    return Json(Err(Error::server_error(format!("could not create github client: {}", e))));
+                }
+            };
+
+            // Now use the access token to get this user's github info. id is the important thing.
+            #[derive(Deserialize)]
+            struct GithubUser {
+                _email: Option<String>,
+                _name: Option<String>,
+                login: String,
+                id: i32,
+                _avatar_url: Option<String>,
+            }
+
+            let user = match client.get().user().execute::<GithubUser>() {
+                Err(e) => {
+                    error!("could not get github user: {}", e);
+                    return Json(Err(Error::client_error("could not get github user with token".to_string())));
+                }
+                Ok((_, _, None)) => {
+                    return Json(Err(Error::server_error("Github returned success, but with no user??".to_string())));
+                }
+                Ok((_, _, Some(u))) => u,
+            };
+
+            // Now either this github account id could have an associated user, or not. If it does,
+            // return it, if not, 
+
+            Json(Ok(AuthUserResp::PartialUser(PartialUser{
+                provider: oauth::Provider::Github,
+                provider_id: user.id,
+                provider_name: user.login,
+                access_token: token.access_token,
+            })))
+        },
+    }
+}
+
 #[post("/user/create", format = "application/json", data = "<req>")]
 pub fn create_user(
     conn: db::Conn,
-    user: Partialuser,
+    user: PartialUser,
     req: Json<CreateUserRequest>,
     mut cookies: Cookies,
 ) -> Json<Result<UserResp, Error>> {
