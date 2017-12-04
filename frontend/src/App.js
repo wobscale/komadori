@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { withRouter } from 'react-router';
 import {
   BrowserRouter as Router,
   Route,
@@ -6,6 +7,7 @@ import {
 } from 'react-router-dom'
 
 import GithubLogin, {GithubOauthWindow} from './github-login-component';
+import {CreateAccount} from './create-account';
 
 import logo from './logo.svg';
 import './App.css';
@@ -19,8 +21,19 @@ class App extends Component {
         </header>
         <Router>
           <div>
-            <Route exact path="/" component={MainPage}/>
-            <Route path="/github/oauth" component={GithubOauthWindow}/>
+            <Route
+              exact
+              path="/"
+              render={(props) => <MainPage {...props}/>}
+              />
+            <Route
+              path="/github/oauth"
+              render={(props) => <GithubOauthWindow {...props}/>}
+              />
+            <Route
+              path="/account/create"
+              render={(props) => <CreateAccount {...props}/>}
+              />
           </div>
         </Router>
       </div>
@@ -28,17 +41,17 @@ class App extends Component {
   }
 }
 
-const MainPage = () => (
+const MainPage = withRouter((props) => (
   <div>
     <h1 className="App-title">Login</h1>
     <p>
       Login to your Wobscale Account
     </p>
-    <GithubLogin />
+    <GithubLogin {...props}/>
 
     <h2>Create an account</h2>
     <p> If you don't have an account yet, login to create one </p>
   </div>
-);
+));
 
 export default App;

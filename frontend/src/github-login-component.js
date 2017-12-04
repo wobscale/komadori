@@ -1,3 +1,4 @@
+import { withRouter } from 'react-router';
 import React, { Component } from 'react';
 import {
   BrowserRouter as Router,
@@ -6,8 +7,13 @@ import {
 } from 'react-router-dom'
 import config from './config';
 import qs from 'query-string';
+import PropTypes from 'prop-types';
 
 class GithubLogin extends Component {
+    static propTypes = {
+      location: PropTypes.object.isRequired,
+      history: PropTypes.object.isRequired
+    }
     constructor(props) {
         super(props);
         this.state = {
@@ -57,11 +63,36 @@ class GithubLogin extends Component {
           this.setState(prev => ({
               oauthState: 2,
           }));
-          console.log(resp)
+          resp.provider = "github";
+          return fetch(config.api + "/user/auth", {
+            mode: 'cors',
+            headers: {"content-type": "application/json"},
+            credentials: 'include',
+            method: "POST",
+            body: JSON.stringify({
+              provider: "github",
+              code: resp.code,
+              state: resp.state,
+            }),
+          });
+        }).then((resp) => resp.json()).then((resp) => {
+          if(resp.Ok && resp.Ok.type === "PartialUser") {
+            console.log(this.props);
+            this.props.history.push({
+              pathname: '/account/create',
+              state: {
+                partialUser: resp.Ok,
+              },
+            });
+          } else {
+            alert("TODO: You're a real user!");
+          }
         }).catch((err) => {
+          // TODO better error handling here, pff alerts
           this.setState(prev => ({
               oauthState: 0,
           }));
+          console.error(err);
           alert(err);
         });
     }
@@ -135,4 +166,4 @@ class GithubOauthWindow extends Component {
 
 export { GithubOauthWindow };
 
-export default GithubLogin;
+export default withRouter(GithubLogin);
