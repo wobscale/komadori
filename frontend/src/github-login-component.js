@@ -74,7 +74,7 @@ class GithubLogin extends Component {
       }
     })
       .catch((err) => {
-      // TODO better error handling here, pff alerts
+        // TODO better error handling here, pff alerts
         this.setState(() => ({
           oauthState: 0,
         }));

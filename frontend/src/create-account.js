@@ -136,12 +136,9 @@ export class CreateAccount extends Component {
         return (
           <div className="created-in">
             <p>Created account {this.state.username}.</p>
-            <b>
-              <p>
-                Congratulations, you&quot;re the first user to get
-                {this.state.uuid} as your UUID!
-              </p>
-            </b>
+            <p>
+              Congratulations, you&quot;re the first user to get the UUID {this.state.uuid}!
+            </p>
           </div>
         );
       default:
