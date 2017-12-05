@@ -186,7 +186,7 @@ impl<'a, 'r> FromRequest<'a, 'r> for User {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct PartialUser {
     provider: oauth::Provider,
     provider_id: i32,
@@ -251,6 +251,7 @@ impl<'a, 'r> FromRequest<'a, 'r> for PartialUser {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CreateUserRequest {
+    partial_user: PartialUser,
     username: String,
     email: String,
 }
@@ -343,7 +344,6 @@ pub fn auth_user(
 #[post("/user/create", format = "application/json", data = "<req>")]
 pub fn create_user(
     conn: db::Conn,
-    user: PartialUser,
     req: Json<CreateUserRequest>,
     mut cookies: Cookies,
 ) -> Json<Result<UserResp, Error>> {
@@ -355,7 +355,7 @@ pub fn create_user(
     }
 
     // Compile-check that we can assume github's the only provider
-    match user.provider {
+    match req.partial_user.provider {
         oauth::Provider::Github => (),
     };
 
@@ -374,15 +374,37 @@ pub fn create_user(
             .get_result(&*conn)?;
 
         diesel::insert(&NewGithubAccount {
-            id: user.provider_id,
+            id: req.partial_user.provider_id,
             user_id: newuser._id,
-            access_token: &user.access_token,
+            access_token: &req.partial_user.access_token,
         }).into(github_accounts)
             .execute(&*conn)?;
 
         Ok((newuser))
     });
     match create_res {
+        Err(e) => {
+            match e {
+                diesel::result::Error::DatabaseError(diesel::result::DatabaseErrorKind::UniqueViolation, e) => {
+                    match e.constraint_name() {
+                        Some("users_username_key") => {
+                            Json(Err(Error::client_error(format!("Could not create account; username '{}' already exists.", req.username))))
+                        }
+                        Some("github_accounts_pkey") => {
+                            Json(Err(Error::client_error(format!("Could not create account; Github account with id {} already associated with a user.", req.partial_user.provider_id))))
+                        }
+                        _ => {
+                            error!("uniqueness violation case missed: {:?}: {:?}, {:?}", e, e.table_name(), e.column_name());
+                            Json(Err(Error::client_error("An unknown uniqueness violation happened, sorry :(".to_string())))
+                        }
+                    }
+                },
+                _ => {
+                    error!("error creating user account: {}", e);
+                    Json(Err(Error::server_error("Could not create account: please contact the administrator if this persists".to_string())))
+                }
+            }
+        }
         Ok(newuser) => {
             cookies.add_private(Cookie::new(
                 "user_uuid".to_owned(),
@@ -395,10 +417,6 @@ pub fn create_user(
                 role: None,
                 uuid: newuser.uuid.simple().to_string(),
             }))
-        }
-        Err(e) => {
-            error!("error creating user account: {}", e);
-            Json(Err(Error::server_error("Could not create account: please contact the administrator if this persists".to_string())))
         }
     }
 }
