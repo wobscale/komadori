@@ -14,4 +14,9 @@ module.exports = {
     "plugins": [
         "react"
     ],
+    "rules": {
+        "react/jsx-filename-extension": "off",
+        "func-names": "off",
+        "react/forbid-prop-types": "off",
+    },
 };
