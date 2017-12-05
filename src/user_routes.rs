@@ -67,7 +67,7 @@ impl User {
     }
     fn from_partial_user(
         conn: &diesel::PgConnection,
-        pu: PartialUser,
+        pu: &PartialUser,
     ) -> Result<Self, GetUserError> {
         // Compile-check that we can assume github's the only provider
         match pu.provider {
@@ -145,7 +145,7 @@ impl<'a, 'r> FromRequest<'a, 'r> for User {
                 debug!("attempting to get uuid from partial-user");
                 match PartialUser::from_request(request) {
                     Outcome::Success(pu) => {
-                        match User::from_partial_user(&*db, pu) {
+                        match User::from_partial_user(&*db, &pu) {
                             Ok(u) => {
                                 // We should also save this user in the cookie to avoid the
                                 // from_partial_user next time
@@ -264,6 +264,18 @@ pub struct UserResp {
     pub email: String,
 }
 
+impl UserResp {
+    pub fn from_user(user: &User) -> Self {
+        UserResp{
+            uuid: user.uuid.simple().to_string(),
+            username: user.username.clone(),
+            role: user.role.clone(),
+            email: user.email.clone(),
+        }
+    }
+}
+
+
 #[derive(Debug, Deserialize)]
 struct GithubLoginRequest {
     code: String,
@@ -328,15 +340,24 @@ pub fn auth_user(
                 Ok((_, _, Some(u))) => u,
             };
 
-            // Now either this github account id could have an associated user, or not. If it does,
-            // return it, if not, 
-
-            Json(Ok(AuthUserResp::PartialUser(PartialUser{
+            let pu = PartialUser{
                 provider: oauth::Provider::Github,
                 provider_id: user.id,
                 provider_name: user.login,
                 access_token: token.access_token,
-            })))
+            };
+
+            // Now either this github account id could have an associated user, or not. If it does,
+            // return it, if not, 
+            match User::from_partial_user(&conn, &pu) {
+                Ok(u) => {
+                    Json(Ok(AuthUserResp::UserResp(UserResp::from_user(&u))))
+                }
+                Err(e) => {
+                    // TODO: better error handling for client vs server errs
+                    Json(Ok(AuthUserResp::PartialUser(pu)))
+                }
+            }
         },
     }
 }
