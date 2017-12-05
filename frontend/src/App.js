@@ -3,10 +3,12 @@ import { withRouter } from 'react-router';
 import {
   BrowserRouter as Router,
   Route,
+  Link,
 } from 'react-router-dom';
 
 import GithubLogin from './github-login-component';
 import GithubOauthWindow from './github-oauth-window';
+import UserDashboard from './user-dashboard';
 import { CreateAccount } from './create-account';
 
 import logo from './logo.svg';
@@ -30,8 +32,16 @@ const App = function () {
             render={props => <GithubOauthWindow {...props} />}
           />
           <Route
+            path="/github/login"
+            render={props => <GithubLogin {...props} />}
+          />
+          <Route
             path="/account/create"
             render={props => <CreateAccount {...props} />}
+          />
+          <Route
+            path="/user/dashboard"
+            render={props => <UserDashboard {...props} />}
           />
         </div>
       </Router>
@@ -39,13 +49,17 @@ const App = function () {
   );
 };
 
-const MainPage = withRouter(props => (
+const MainPage = withRouter(() => (
   <div>
     <h1 className="App-title">Login</h1>
     <p>
       Login to your Wobscale Account
     </p>
-    <GithubLogin {...props} />
+    <Link to="/github/login">
+      <button type="button">
+        Login with Github
+      </button>
+    </Link>
 
     <h2>Create an account</h2>
     <p> If you {"don't"} have an account yet, login to create one </p>

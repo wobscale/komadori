@@ -67,6 +67,14 @@ export class CreateAccount extends Component {
           uuid: resp.Ok.uuid,
           username: resp.Ok.username,
         });
+        setTimeout(() => {
+          this.props.history.push({
+            pathname: '/user/dashboard',
+            state: {
+              user: resp.Ok,
+            },
+          });
+        }, 500);
       } else {
         this.setState({
           step: steps.error,
@@ -148,6 +156,7 @@ export class CreateAccount extends Component {
 }
 CreateAccount.propTypes = {
   location: PropTypes.object.isRequired,
+  history: PropTypes.object.isRequired,
 };
 
 export default withRouter(CreateAccount);
