@@ -197,6 +197,17 @@ struct WardenCreateGroupRequest {
     members: Vec<String>,
 }
 
+#[derive(Serialize)]
+struct WardenAddGroupMembersRequest {
+    members: Vec<String>,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct WardenGroup {
+    id: String,
+    members: Option<Vec<String>>,
+}
+
 // Warden groups
 impl Client {
     pub fn warden_group_get(&self, id: &str) -> Result<WardenGroupResponse, String> {
@@ -216,5 +227,31 @@ impl Client {
                 members: initial_members,
             },
         )
+    }
+
+    pub fn warden_group_add_members(&self, id: &str, members: Vec<Uuid>) -> Result<(), String> {
+        self.make_nonjson_request(
+            reqwest::Method::Post,
+            &format!("warden/groups/{}/members", id),
+            WardenAddGroupMembersRequest {
+                members: members
+                    .iter()
+                    .map(|uuid| uuid.simple().to_string())
+                    .collect(),
+            },
+        )
+    }
+
+    pub fn warden_get_groups(&self, user: Uuid) -> Result<Vec<WardenGroup>, String> {
+        self.make_request(
+            reqwest::Method::Get,
+            &format!("warden/groups?member={}", user.simple().to_string()),
+            "",
+        )
+    }
+
+    pub fn warden_get_group_names(&self, user: Uuid) -> Result<Vec<String>, String> {
+        let groups = self.warden_get_groups(user)?;
+        Ok(groups.into_iter().map(|group| group.id).collect())
     }
 }
