@@ -102,50 +102,34 @@ impl Client {
 
         Ok(())
     }
+}
 
-    pub fn create_user(&self, name: &str) -> Result<ClientToken, String> {
-        let resp: HydraCreateUserResp = self.make_request(
+#[derive(Serialize)]
+struct CreateUserRequest {
+    client_name: String,
+}
+
+#[derive(Deserialize)]
+struct CreateUserResp {
+    // There are other fields which I'm ignoring for now
+    id: String,
+    client_secret: String,
+}
+
+impl Client {
+    pub fn user_create(&self, name: &str) -> Result<ClientToken, String> {
+        let resp: CreateUserResp = self.make_request(
             reqwest::Method::Post,
             "clients",
-            HydraCreateUserRequest {
+            CreateUserRequest {
                 client_name: name.to_string(),
             },
-        ).unwrap();
+        )?;
 
         Ok(ClientToken {
             client_id: resp.id,
             client_secret: resp.client_secret,
         })
-    }
-
-    pub fn consent_get(&self, id: &str) -> Result<ConsentInfoResponse, String> {
-        let url = format!("oauth2/consent/requests/{}", id);
-        let resp: ConsentInfoResponse = self.make_request(reqwest::Method::Get, &url, "").unwrap();
-
-        Ok(resp)
-    }
-
-    pub fn consent_accept(&self, id: &str, scopes: &Vec<String>, user: Uuid) -> Result<(), String> {
-        let url = format!("oauth2/consent/requests/{}/accept", id);
-        self.make_nonjson_request(
-            reqwest::Method::Patch,
-            &url,
-            HydraConsentnAllowRequest {
-                subject: user.simple().to_string(),
-                grant_scopes: scopes.clone(),
-            },
-        )
-    }
-
-    pub fn consent_reject(&self, id: &str, reason: &str) -> Result<(), String> {
-        let url = format!("oauth2/consent/requests/{}/reject", id);
-        self.make_request(
-            reqwest::Method::Patch,
-            &url,
-            HydraConsentnRejectRequest {
-                reason: reason.to_string(),
-            },
-        )
     }
 }
 
@@ -160,24 +144,77 @@ pub struct ConsentInfoResponse {
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
-struct HydraConsentnAllowRequest {
+struct ConsentAllowRequest {
     grant_scopes: Vec<String>,
     subject: String,
 }
 
 #[derive(Serialize)]
-struct HydraConsentnRejectRequest {
+struct ConsentnRejectRequest {
     reason: String,
 }
 
-#[derive(Serialize)]
-struct HydraCreateUserRequest {
-    client_name: String,
+// Consent
+impl Client {
+    pub fn consent_get(&self, id: &str) -> Result<ConsentInfoResponse, String> {
+        let url = format!("oauth2/consent/requests/{}", id);
+        self.make_request(reqwest::Method::Get, &url, "")
+    }
+
+    pub fn consent_accept(&self, id: &str, scopes: &Vec<String>, user: Uuid) -> Result<(), String> {
+        let url = format!("oauth2/consent/requests/{}/accept", id);
+        self.make_nonjson_request(
+            reqwest::Method::Patch,
+            &url,
+            ConsentAllowRequest {
+                subject: user.simple().to_string(),
+                grant_scopes: scopes.clone(),
+            },
+        )
+    }
+
+    pub fn consent_reject(&self, id: &str, reason: &str) -> Result<(), String> {
+        let url = format!("oauth2/consent/requests/{}/reject", id);
+        self.make_nonjson_request(
+            reqwest::Method::Patch,
+            &url,
+            ConsentnRejectRequest {
+                reason: reason.to_string(),
+            },
+        )
+    }
 }
 
 #[derive(Deserialize)]
-struct HydraCreateUserResp {
-    // There are other fields which I'm ignoring for now
+pub struct WardenGroupResponse {
+    pub id: String,
+    pub members: Option<Vec<String>>,
+}
+
+#[derive(Serialize)]
+struct WardenCreateGroupRequest {
     id: String,
-    client_secret: String,
+    members: Vec<String>,
+}
+
+// Warden groups
+impl Client {
+    pub fn warden_group_get(&self, id: &str) -> Result<WardenGroupResponse, String> {
+        self.make_request(reqwest::Method::Get, &format!("warden/groups/{}", id), "")
+    }
+
+    pub fn warden_group_create(
+        &self,
+        id: &str,
+        initial_members: Vec<String>,
+    ) -> Result<WardenGroupResponse, String> {
+        self.make_request(
+            reqwest::Method::Post,
+            "warden/groups",
+            WardenCreateGroupRequest {
+                id: id.to_string(),
+                members: initial_members,
+            },
+        )
+    }
 }
