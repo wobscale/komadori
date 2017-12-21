@@ -24,6 +24,7 @@ extern crate serde_json;
 mod hydra;
 mod schema;
 mod models;
+mod permissions;
 mod errors;
 mod db;
 mod oauth;
@@ -104,6 +105,7 @@ fn main() {
             &env::var("HYDRA_CLIENT_SECRET").expect("Must set HYDRA_CLIENT_SECRET"),
         )
     };
+    permissions::initialize_groups(&hydra).expect("could not initialize groups");
 
     let github_oauth_config = {
         let client_id = env::var("GITHUB_CLIENT_ID").expect("GITHUB_CLIENT_ID must be set");
