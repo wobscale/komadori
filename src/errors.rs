@@ -6,8 +6,7 @@ use serde_json;
 
 #[derive(Serialize, Debug)]
 pub struct Error {
-    #[serde(with = "StatusDef")]
-    status: Status,
+    #[serde(with = "StatusDef")] status: Status,
     message: String,
 }
 

@@ -3,6 +3,7 @@ use db;
 use oauth;
 use diesel;
 use diesel::Connection;
+use diesel::result::Error as DieselErr;
 use rocket;
 use rocket::State;
 use rocket_contrib::json::Json;
@@ -18,7 +19,7 @@ use github;
 use errors::Error;
 
 pub fn routes() -> Vec<rocket::Route> {
-    routes![create_user, logout_user, auth_user]
+    routes![create_user, logout_user, auth_user, get_user]
 }
 
 #[derive(Debug, Clone, Queryable)]
@@ -50,15 +51,13 @@ impl User {
         use diesel::prelude::*;
         use schema::users::dsl::*;
         match users.filter(uuid.eq(uuid_)).limit(1).load::<User>(conn) {
-            Ok(u) => {
-                match u.first() {
-                    Some(u) => Ok(u.clone()),
-                    None => {
-                        error!("error getting user {}", uuid_);
-                        Err(GetUserError::NoSuchUser)
-                    }
+            Ok(u) => match u.first() {
+                Some(u) => Ok(u.clone()),
+                None => {
+                    error!("error getting user {}", uuid_);
+                    Err(GetUserError::NoSuchUser)
                 }
-            }
+            },
             Err(e) => {
                 error!("error getting user {}", uuid_);
                 Err(GetUserError::DbError(e))
@@ -91,17 +90,14 @@ impl User {
             );
             res
         } {
-            Ok(u) => {
-                match u.first() {
-                    Some(u) => Ok(u.clone()),
-                    None => Err(GetUserError::NoSuchUser),
-                }
-            }
+            Ok(u) => match u.first() {
+                Some(u) => Ok(u.clone()),
+                None => Err(GetUserError::NoSuchUser),
+            },
             Err(e) => Err(GetUserError::DbError(e)),
         }
     }
 }
-
 
 impl<'a, 'r> FromRequest<'a, 'r> for User {
     type Error = ();
@@ -157,7 +153,6 @@ impl<'a, 'r> FromRequest<'a, 'r> for User {
                                         "user_uuid".to_owned(),
                                         u.uuid.simple().to_string(),
                                     ));
-                                    cookies.remove_private(Cookie::named("oauth_token"));
                                 }
                                 u.uuid
                             }
@@ -167,9 +162,7 @@ impl<'a, 'r> FromRequest<'a, 'r> for User {
                             }
                         }
                     }
-                    Outcome::Forward(()) => {
-                        return Outcome::Forward(())
-                    }
+                    Outcome::Forward(()) => return Outcome::Forward(()),
                     Outcome::Failure(e) => {
                         return Outcome::Failure(e);
                     }
@@ -266,7 +259,7 @@ pub struct UserResp {
 
 impl UserResp {
     pub fn from_user(user: &User) -> Self {
-        UserResp{
+        UserResp {
             uuid: user.uuid.simple().to_string(),
             username: user.username.clone(),
             role: user.role.clone(),
@@ -275,9 +268,8 @@ impl UserResp {
     }
 }
 
-
 #[derive(Debug, Deserialize)]
-struct GithubLoginRequest {
+pub struct GithubLoginRequest {
     code: String,
     state: String,
 }
@@ -300,6 +292,7 @@ pub fn auth_user(
     conn: db::Conn,
     req: Json<AuthUserRequest>,
     github_oauth: State<github::OauthConfig>,
+    mut cookies: Cookies,
 ) -> Json<Result<AuthUserResp, Error>> {
     match req.0 {
         AuthUserRequest::github(g) => {
@@ -308,14 +301,19 @@ pub fn auth_user(
                 Ok(t) => t,
                 Err(e) => {
                     error!("github exchange code error: {}", e);
-                    return Json(Err(Error::client_error("could not exchange code".to_string())));
+                    return Json(Err(Error::client_error(
+                        "could not exchange code".to_string(),
+                    )));
                 }
             };
 
             let client = match Github::new(&token.access_token) {
                 Ok(c) => c,
                 Err(e) => {
-                    return Json(Err(Error::server_error(format!("could not create github client: {}", e))));
+                    return Json(Err(Error::server_error(format!(
+                        "could not create github client: {}",
+                        e
+                    ))));
                 }
             };
 
@@ -332,15 +330,19 @@ pub fn auth_user(
             let user = match client.get().user().execute::<GithubUser>() {
                 Err(e) => {
                     error!("could not get github user: {}", e);
-                    return Json(Err(Error::client_error("could not get github user with token".to_string())));
+                    return Json(Err(Error::client_error(
+                        "could not get github user with token".to_string(),
+                    )));
                 }
                 Ok((_, _, None)) => {
-                    return Json(Err(Error::server_error("Github returned success, but with no user??".to_string())));
+                    return Json(Err(Error::server_error(
+                        "Github returned success, but with no user??".to_string(),
+                    )));
                 }
                 Ok((_, _, Some(u))) => u,
             };
 
-            let pu = PartialUser{
+            let pu = PartialUser {
                 provider: oauth::Provider::Github,
                 provider_id: user.id,
                 provider_name: user.login,
@@ -348,9 +350,13 @@ pub fn auth_user(
             };
 
             // Now either this github account id could have an associated user, or not. If it does,
-            // return it, if not, 
+            // return it, if not,
             match User::from_partial_user(&conn, &pu) {
                 Ok(u) => {
+                    cookies.add_private(Cookie::new(
+                        "user_uuid".to_owned(),
+                        u.uuid.simple().to_string(),
+                    ));
                     Json(Ok(AuthUserResp::UserResp(UserResp::from_user(&u))))
                 }
                 Err(e) => {
@@ -358,8 +364,13 @@ pub fn auth_user(
                     Json(Ok(AuthUserResp::PartialUser(pu)))
                 }
             }
-        },
+        }
     }
+}
+
+#[get("/user", format = "application/json")]
+pub fn get_user(user: User) -> Json<UserResp> {
+    Json(UserResp::from_user(&user))
 }
 
 #[post("/user/create", format = "application/json", data = "<req>")]
@@ -372,7 +383,9 @@ pub fn create_user(
         return Json(Err(Error::client_error("Name cannot be blank".to_string())));
     }
     if req.email.len() == 0 {
-        return Json(Err(Error::client_error("Email cannot be blank".to_string())));
+        return Json(Err(Error::client_error(
+            "Email cannot be blank".to_string(),
+        )));
     }
 
     // Compile-check that we can assume github's the only provider
@@ -387,7 +400,7 @@ pub fn create_user(
         use diesel::prelude::*;
         use schema::users::dsl::*;
         use schema::github_accounts::dsl::*;
-        use models::{NewUser, NewGithubAccount};
+        use models::{NewGithubAccount, NewUser};
         let newuser: User = diesel::insert(&NewUser {
             username: &req.username,
             email: &req.email,
@@ -406,7 +419,7 @@ pub fn create_user(
     match create_res {
         Err(e) => {
             match e {
-                diesel::result::Error::DatabaseError(diesel::result::DatabaseErrorKind::UniqueViolation, e) => {
+                DieselErr::DatabaseError(diesel::result::DatabaseErrorKind::UniqueViolation, e) => {
                     match e.constraint_name() {
                         Some("users_username_key") => {
                             Json(Err(Error::client_error(format!("Could not create account; username '{}' already exists.", req.username))))
@@ -449,5 +462,5 @@ pub struct UserLogoutResponse {}
 pub fn logout_user(mut cookies: Cookies) -> Json<UserLogoutResponse> {
     cookies.remove_private(Cookie::named("oauth_token"));
     cookies.remove_private(Cookie::named("user_uuid"));
-    Json(UserLogoutResponse{})
+    Json(UserLogoutResponse {})
 }

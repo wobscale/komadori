@@ -32,8 +32,7 @@ impl Provider {
 #[derive(Serialize, Deserialize)]
 pub struct SerializableToken {
     pub provider: Provider,
-    #[serde(with = "Token")]
-    pub token: oauth2::Token,
+    #[serde(with = "Token")] pub token: oauth2::Token,
 }
 
 impl<'a, 'r> FromRequest<'a, 'r> for SerializableToken {
