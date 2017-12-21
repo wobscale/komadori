@@ -1,0 +1,26 @@
+[package]
+name = "komadori"
+version = "0.1.0"
+authors = ["Wobscale Authors"]
+
+[dependencies]
+log = "*"
+fern = "*"
+chrono = "*"
+rocket = "0.3.3"
+rocket_contrib = { version = "0.3.3", features = ["json", "tera_templates"] }
+serde = "1.0"
+serde_json = "1.0"
+serde_derive = "1.0"
+rocket_codegen = "0.3.3"
+uuid = "*"
+diesel = { version = "0.16.0", features = ["postgres", "uuid"] }
+diesel_codegen = { version = "0.16.0", features = ["postgres"] }
+r2d2 = "*"
+r2d2-diesel = "*"
+oauth2 = "*"
+rand = "*"
+dotenv = "0.10.*" # not used, but included due to https://github.com/purpliminal/rust-dotenv/issues/69
+github-rs = "0.6"
+reqwest = "0.8"
+url = "1.6"
