@@ -21,5 +21,6 @@ r2d2-diesel = "*"
 oauth2 = "*"
 rand = "*"
 dotenv = "0.10.*" # not used, but included due to https://github.com/purpliminal/rust-dotenv/issues/69
-tera = "*"
 github-rs = "0.6"
+reqwest = "0.8"
+url = "1.6"
