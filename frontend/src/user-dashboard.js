@@ -13,7 +13,16 @@ class UserDashboard extends Component {
   render() {
     return (
       <div>
-        Welcome {this.state.user.username}!
+        <p>
+          Welcome {this.state.user.username}!
+        </p>
+        <h3>Groups</h3>
+        <p> {"You're"} in the following groups: </p>
+        <ul>
+          {
+            this.state.user.groups.map(group => (<li key={group}>{group}</li>))
+          }
+        </ul>
       </div>
     );
   }
