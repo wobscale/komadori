@@ -64,17 +64,14 @@ export class CreateAccount extends Component {
       if (resp.Ok && resp.Ok.uuid) {
         this.setState({
           step: steps.created,
-          uuid: resp.Ok.uuid,
           username: resp.Ok.username,
         });
-        setTimeout(() => {
-          this.props.history.push({
-            pathname: '/user/dashboard',
-            state: {
-              user: resp.Ok,
-            },
-          });
-        }, 500);
+        this.props.history.push({
+          pathname: '/user/dashboard',
+          state: {
+            user: resp.Ok,
+          },
+        });
       } else {
         this.setState({
           step: steps.error,
@@ -144,9 +141,6 @@ export class CreateAccount extends Component {
         return (
           <div className="created-in">
             <p>Created account {this.state.username}.</p>
-            <p>
-              Congratulations, you&quot;re the first user to get the UUID {this.state.uuid}!
-            </p>
           </div>
         );
       default:

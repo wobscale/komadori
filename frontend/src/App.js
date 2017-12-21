@@ -9,6 +9,7 @@ import {
 import GithubLogin from './github-login-component';
 import GithubOauthWindow from './github-oauth-window';
 import UserDashboard from './user-dashboard';
+import UserConsent from './user-consent';
 import { CreateAccount } from './create-account';
 
 import logo from './logo.svg';
@@ -42,6 +43,10 @@ const App = function () {
           <Route
             path="/user/dashboard"
             render={props => <UserDashboard {...props} />}
+          />
+          <Route
+            path="/user/consent"
+            render={props => <UserConsent {...props} />}
           />
         </div>
       </Router>
