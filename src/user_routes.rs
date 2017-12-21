@@ -1,5 +1,6 @@
 use std;
 use db;
+use permissions;
 use oauth;
 use diesel;
 use diesel::Connection;
@@ -17,6 +18,7 @@ use github_rs::client::Executor;
 use github_rs::client::Github;
 use github;
 use errors::Error;
+use hydra;
 
 pub fn routes() -> Vec<rocket::Route> {
     routes![create_user, logout_user, auth_user, get_user]
@@ -255,16 +257,22 @@ pub struct UserResp {
     pub username: String,
     pub role: Option<String>,
     pub email: String,
+
+    pub groups: Vec<String>,
 }
 
 impl UserResp {
-    pub fn from_user(user: &User) -> Self {
-        UserResp {
+    pub fn from_user(user: &User, hydra: &hydra::client::Client) -> Result<Self, Error> {
+        let groups = hydra.warden_get_group_names(user.uuid).map_err(|e| {
+            Error::server_error(format!("error getting groups for {:?}: {}", user, e))
+        })?;
+        Ok(UserResp {
             uuid: user.uuid.simple().to_string(),
             username: user.username.clone(),
             role: user.role.clone(),
             email: user.email.clone(),
-        }
+            groups: groups,
+        })
     }
 }
 
@@ -290,6 +298,7 @@ pub enum AuthUserResp {
 #[post("/user/auth", format = "application/json", data = "<req>")]
 pub fn auth_user(
     conn: db::Conn,
+    hydra: State<hydra::client::Client>,
     req: Json<AuthUserRequest>,
     github_oauth: State<github::OauthConfig>,
     mut cookies: Cookies,
@@ -357,7 +366,13 @@ pub fn auth_user(
                         "user_uuid".to_owned(),
                         u.uuid.simple().to_string(),
                     ));
-                    Json(Ok(AuthUserResp::UserResp(UserResp::from_user(&u))))
+                    let ru = match UserResp::from_user(&u, &*hydra) {
+                        Err(e) => {
+                            return Json(Err(e));
+                        }
+                        Ok(ru) => ru,
+                    };
+                    Json(Ok(AuthUserResp::UserResp(ru)))
                 }
                 Err(e) => {
                     // TODO: better error handling for client vs server errs
@@ -369,13 +384,17 @@ pub fn auth_user(
 }
 
 #[get("/user", format = "application/json")]
-pub fn get_user(user: User) -> Json<UserResp> {
-    Json(UserResp::from_user(&user))
+pub fn get_user(user: User, hydra: State<hydra::client::Client>) -> Json<Result<UserResp, Error>> {
+    match UserResp::from_user(&user, &*hydra) {
+        Ok(user) => Json(Ok(user)),
+        Err(e) => Json(Err(e)),
+    }
 }
 
 #[post("/user/create", format = "application/json", data = "<req>")]
 pub fn create_user(
     conn: db::Conn,
+    hydra: State<hydra::client::Client>,
     req: Json<CreateUserRequest>,
     mut cookies: Cookies,
 ) -> Json<Result<UserResp, Error>> {
@@ -414,6 +433,15 @@ pub fn create_user(
         }).into(github_accounts)
             .execute(&*conn)?;
 
+        // Note: if this changes, also change the hardcoded 'groups' in the userresp below
+        match hydra.warden_group_add_members(permissions::USER_GROUP, vec![newuser.uuid]) {
+            Err(e) => {
+                error!("error adding new user {:?} to users group: {}", newuser, e);
+                return Err(DieselErr::RollbackTransaction);
+            }
+            _ => {}
+        };
+
         Ok((newuser))
     });
     match create_res {
@@ -450,6 +478,7 @@ pub fn create_user(
                 email: newuser.email,
                 role: None,
                 uuid: newuser.uuid.simple().to_string(),
+                groups: vec![permissions::USER_GROUP.to_string()],
             }))
         }
     }
