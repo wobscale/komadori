@@ -41,6 +41,11 @@ class GithubLogin extends Component {
 
     new Promise((resolve, reject) => {
       const waitClosed = window.setInterval(() => {
+        if (!win) {
+          reject(new Error('null widow'));
+          // popup blocked probably
+          return;
+        }
         if (!win.closed) {
           return;
         }
@@ -76,7 +81,7 @@ class GithubLogin extends Component {
         });
       } else if (resp.Ok && resp.Ok.type === 'UserResp') {
         this.props.history.push({
-          pathname: '/user/dashboard',
+          pathname: '/',
           state: {
             user: resp.Ok,
           },

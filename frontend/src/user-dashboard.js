@@ -4,13 +4,14 @@ import PropTypes from 'prop-types';
 class UserDashboard extends Component {
   constructor(props) {
     super(props);
-    const user = this.props.location.state && this.props.location.state.user;
+    const { user } = this.props;
     this.state = {
       user,
     };
   }
 
   render() {
+    console.log(this.state.user);
     return (
       <div>
         <p>
@@ -28,7 +29,7 @@ class UserDashboard extends Component {
   }
 }
 UserDashboard.propTypes = {
-  location: PropTypes.object.isRequired,
+  user: PropTypes.object.isRequired,
 };
 
 export default UserDashboard;

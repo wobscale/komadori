@@ -7,12 +7,22 @@ class UserAPI {
       headers: { 'content-type': 'application/json' },
       credentials: 'include',
       method: 'GET',
-    }).then(resp => resp.json()).then((resp) => {
-      if (resp.uuid) {
-        return resp;
+    }).then((resp) => {
+      if (resp.status === 404) {
+        return { loggedIn: false };
       }
-
-      throw new Error('Invalid user response, did not include uuid');
+      return resp.json().then((user) => {
+        if (user.Ok) {
+          return {
+            loggedIn: true,
+            user: user.Ok,
+          };
+        }
+        if (user.Err) {
+          throw new Error('api error: ', user.Err);
+        }
+        throw new Error('error: api gave back invalid json: ', user);
+      });
     });
   }
 }
