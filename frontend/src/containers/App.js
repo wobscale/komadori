@@ -36,10 +36,10 @@ ReactApp.propTypes = {
 };
 
 const mapStateToProps = (state) => {
-  const user = state.user || { isFetching: true };
+  const { user } = state;
   return {
-    loading: user.isFetching || false,
-    loggedIn: user.loggedIn || false,
+    loading: !user.loaded,
+    loggedIn: user.loggedIn,
     user,
   };
 };
