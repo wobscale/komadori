@@ -4,7 +4,7 @@
 #[macro_use]
 extern crate diesel;
 #[macro_use]
-extern crate diesel_codegen;
+extern crate diesel_migrations;
 extern crate github_rs;
 extern crate oauth2;
 extern crate r2d2;
@@ -41,7 +41,6 @@ use std::path::{Path, PathBuf};
 use diesel::prelude::*;
 use std::env;
 use std::time::Instant;
-use rocket_contrib::Template;
 use std::io::Cursor;
 
 extern crate chrono;
@@ -75,9 +74,9 @@ fn main() {
                 message
             ))
         })
-        .level(log::LogLevelFilter::Warn)
-        .level_for("rocket", log::LogLevelFilter::Info)
-        .level_for("komadori", log::LogLevelFilter::Debug)
+        .level(log::LevelFilter::Warn)
+        .level_for("rocket", log::LevelFilter::Info)
+        .level_for("komadori", log::LevelFilter::Debug)
         .chain(std::io::stdout())
         .apply()
         .unwrap();
@@ -122,7 +121,7 @@ fn main() {
         );
     }
 
-    rkt.attach(Template::fairing())
+    rkt
         .manage(pool)
         .manage(github_oauth_config)
         .manage(hydra)

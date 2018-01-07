@@ -420,17 +420,17 @@ pub fn create_user(
         use schema::users::dsl::*;
         use schema::github_accounts::dsl::*;
         use models::{NewGithubAccount, NewUser};
-        let newuser: User = diesel::insert(&NewUser {
+        let newuser: User = diesel::insert_into(users).values(&NewUser {
             username: &req.username,
             email: &req.email,
-        }).into(users)
+        })
             .get_result(&*conn)?;
 
-        diesel::insert(&NewGithubAccount {
+        diesel::insert_into(github_accounts).values(&NewGithubAccount {
             id: req.partial_user.provider_id,
             user_id: newuser._id,
             access_token: &req.partial_user.access_token,
-        }).into(github_accounts)
+        })
             .execute(&*conn)?;
 
         // Note: if this changes, also change the hardcoded 'groups' in the userresp below
