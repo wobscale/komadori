@@ -1,0 +1,12 @@
+[package]
+name = "hydra_oauthed_client"
+version = "0.1.0"
+authors = ["Euan Kemp <euank@euank.com>"]
+
+[dependencies]
+hydra_client = { path = "../hydra_client" }
+hyper = "*"
+tokio-core = "*"
+futures = "*"
+oauth2 = { git = "https://github.com/euank/oauth2-rs", branch = "scope-and-basic-auth" }
+url = "*"
