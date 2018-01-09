@@ -1,11 +1,14 @@
 #![feature(plugin, custom_derive)]
 #![plugin(rocket_codegen)]
 
+extern crate constant_time_eq;
 #[macro_use]
 extern crate diesel;
 #[macro_use]
 extern crate diesel_migrations;
 extern crate github_rs;
+#[macro_use]
+extern crate lazy_static;
 extern crate oauth2;
 extern crate r2d2;
 extern crate r2d2_diesel;
@@ -28,6 +31,7 @@ mod permissions;
 mod errors;
 mod db;
 mod oauth;
+mod admin_routes;
 mod user_routes;
 mod oauth_routes;
 mod github;
@@ -127,6 +131,7 @@ fn main() {
         .manage(hydra)
         .mount("/", routes![healthz, files])
         .mount("/", user_routes::routes())
+        .mount("/", admin_routes::routes())
         .mount("/", oauth_routes::routes())
         .mount("/github", github::routes())
         .launch();

@@ -22,6 +22,8 @@ dotenv = "0.10.*" # not used, but included due to https://github.com/purpliminal
 github-rs = "=0.6.0"
 reqwest = "0.8"
 url = "1.6"
+lazy_static = "1.0"
+constant_time_eq = "0.1"
 
 # See https://github.com/SergioBenitez/Rocket/issues/513; this should be temporary
 rocket = { git = "https://github.com/SergioBenitez/Rocket", branch = "v0.3" }

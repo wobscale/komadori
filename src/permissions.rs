@@ -2,6 +2,7 @@ use hydra::client::Client;
 
 pub const USER_GROUP: &str = "users";
 pub const DEV_GROUP: &str = "wobdevs";
+pub const ADMIN_GROUP: &str = "admins";
 
 fn all_groups() -> Vec<&'static str> {
     vec![USER_GROUP, DEV_GROUP]
