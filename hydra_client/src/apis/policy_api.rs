@@ -67,7 +67,7 @@ impl<C: hyper::client::Connect>PolicyApi for PolicyApiClient<C> {
             for (key, val) in &auth_query {
                 query.append_pair(key, val);
             }
-            query.finish()
+            format!("?{}", query.finish())
         };
         let uri_str = format!("{}/policies{}", configuration.base_path, query_string);
 
@@ -138,7 +138,7 @@ impl<C: hyper::client::Connect>PolicyApi for PolicyApiClient<C> {
             for (key, val) in &auth_query {
                 query.append_pair(key, val);
             }
-            query.finish()
+            format!("?{}", query.finish())
         };
         let uri_str = format!("{}/policies/{id}{}", configuration.base_path, query_string, id=id);
 
@@ -202,7 +202,7 @@ impl<C: hyper::client::Connect>PolicyApi for PolicyApiClient<C> {
             for (key, val) in &auth_query {
                 query.append_pair(key, val);
             }
-            query.finish()
+            format!("?{}", query.finish())
         };
         let uri_str = format!("{}/policies/{id}{}", configuration.base_path, query_string, id=id);
 
@@ -271,7 +271,7 @@ impl<C: hyper::client::Connect>PolicyApi for PolicyApiClient<C> {
             for (key, val) in &auth_query {
                 query.append_pair(key, val);
             }
-            query.finish()
+            format!("?{}", query.finish())
         };
         let uri_str = format!("{}/policies{}", configuration.base_path, query_string);
 
@@ -338,7 +338,7 @@ impl<C: hyper::client::Connect>PolicyApi for PolicyApiClient<C> {
             for (key, val) in &auth_query {
                 query.append_pair(key, val);
             }
-            query.finish()
+            format!("?{}", query.finish())
         };
         let uri_str = format!("{}/policies/{id}{}", configuration.base_path, query_string, id=id);
 

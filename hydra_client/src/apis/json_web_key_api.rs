@@ -69,7 +69,7 @@ impl<C: hyper::client::Connect>JsonWebKeyApi for JsonWebKeyApiClient<C> {
             for (key, val) in &auth_query {
                 query.append_pair(key, val);
             }
-            query.finish()
+            format!("?{}", query.finish())
         };
         let uri_str = format!("{}/keys/{set}{}", configuration.base_path, query_string, set=set);
 
@@ -140,7 +140,7 @@ impl<C: hyper::client::Connect>JsonWebKeyApi for JsonWebKeyApiClient<C> {
             for (key, val) in &auth_query {
                 query.append_pair(key, val);
             }
-            query.finish()
+            format!("?{}", query.finish())
         };
         let uri_str = format!("{}/keys/{set}/{kid}{}", configuration.base_path, query_string, kid=kid, set=set);
 
@@ -204,7 +204,7 @@ impl<C: hyper::client::Connect>JsonWebKeyApi for JsonWebKeyApiClient<C> {
             for (key, val) in &auth_query {
                 query.append_pair(key, val);
             }
-            query.finish()
+            format!("?{}", query.finish())
         };
         let uri_str = format!("{}/keys/{set}{}", configuration.base_path, query_string, set=set);
 
@@ -268,7 +268,7 @@ impl<C: hyper::client::Connect>JsonWebKeyApi for JsonWebKeyApiClient<C> {
             for (key, val) in &auth_query {
                 query.append_pair(key, val);
             }
-            query.finish()
+            format!("?{}", query.finish())
         };
         let uri_str = format!("{}/keys/{set}/{kid}{}", configuration.base_path, query_string, kid=kid, set=set);
 
@@ -335,7 +335,7 @@ impl<C: hyper::client::Connect>JsonWebKeyApi for JsonWebKeyApiClient<C> {
             for (key, val) in &auth_query {
                 query.append_pair(key, val);
             }
-            query.finish()
+            format!("?{}", query.finish())
         };
         let uri_str = format!("{}/keys/{set}{}", configuration.base_path, query_string, set=set);
 
@@ -402,7 +402,7 @@ impl<C: hyper::client::Connect>JsonWebKeyApi for JsonWebKeyApiClient<C> {
             for (key, val) in &auth_query {
                 query.append_pair(key, val);
             }
-            query.finish()
+            format!("?{}", query.finish())
         };
         let uri_str = format!("{}/keys/{set}/{kid}{}", configuration.base_path, query_string, kid=kid, set=set);
 
@@ -473,7 +473,7 @@ impl<C: hyper::client::Connect>JsonWebKeyApi for JsonWebKeyApiClient<C> {
             for (key, val) in &auth_query {
                 query.append_pair(key, val);
             }
-            query.finish()
+            format!("?{}", query.finish())
         };
         let uri_str = format!("{}/keys/{set}{}", configuration.base_path, query_string, set=set);
 

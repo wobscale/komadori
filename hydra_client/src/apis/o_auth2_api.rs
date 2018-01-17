@@ -77,7 +77,7 @@ impl<C: hyper::client::Connect>OAuth2Api for OAuth2ApiClient<C> {
             for (key, val) in &auth_query {
                 query.append_pair(key, val);
             }
-            query.finish()
+            format!("?{}", query.finish())
         };
         let uri_str = format!("{}/oauth2/consent/requests/{id}/accept{}", configuration.base_path, query_string, id=id);
 
@@ -145,7 +145,7 @@ impl<C: hyper::client::Connect>OAuth2Api for OAuth2ApiClient<C> {
             for (key, val) in &auth_query {
                 query.append_pair(key, val);
             }
-            query.finish()
+            format!("?{}", query.finish())
         };
         let uri_str = format!("{}/clients{}", configuration.base_path, query_string);
 
@@ -216,7 +216,7 @@ impl<C: hyper::client::Connect>OAuth2Api for OAuth2ApiClient<C> {
             for (key, val) in &auth_query {
                 query.append_pair(key, val);
             }
-            query.finish()
+            format!("?{}", query.finish())
         };
         let uri_str = format!("{}/clients/{id}{}", configuration.base_path, query_string, id=id);
 
@@ -280,7 +280,7 @@ impl<C: hyper::client::Connect>OAuth2Api for OAuth2ApiClient<C> {
             for (key, val) in &auth_query {
                 query.append_pair(key, val);
             }
-            query.finish()
+            format!("?{}", query.finish())
         };
         let uri_str = format!("{}/clients/{id}{}", configuration.base_path, query_string, id=id);
 
@@ -347,7 +347,7 @@ impl<C: hyper::client::Connect>OAuth2Api for OAuth2ApiClient<C> {
             for (key, val) in &auth_query {
                 query.append_pair(key, val);
             }
-            query.finish()
+            format!("?{}", query.finish())
         };
         let uri_str = format!("{}/oauth2/consent/requests/{id}{}", configuration.base_path, query_string, id=id);
 
@@ -396,7 +396,7 @@ impl<C: hyper::client::Connect>OAuth2Api for OAuth2ApiClient<C> {
 
         let query_string = {
             let mut query = ::url::form_urlencoded::Serializer::new(String::new());
-            query.finish()
+            format!("?{}", query.finish())
         };
         let uri_str = format!("{}/.well-known/openid-configuration{}", configuration.base_path, query_string);
 
@@ -474,7 +474,7 @@ impl<C: hyper::client::Connect>OAuth2Api for OAuth2ApiClient<C> {
             for (key, val) in &auth_query {
                 query.append_pair(key, val);
             }
-            query.finish()
+            format!("?{}", query.finish())
         };
         let uri_str = format!("{}/oauth2/introspect{}", configuration.base_path, query_string);
 
@@ -541,7 +541,7 @@ impl<C: hyper::client::Connect>OAuth2Api for OAuth2ApiClient<C> {
             for (key, val) in &auth_query {
                 query.append_pair(key, val);
             }
-            query.finish()
+            format!("?{}", query.finish())
         };
         let uri_str = format!("{}/clients{}", configuration.base_path, query_string);
 
@@ -590,7 +590,7 @@ impl<C: hyper::client::Connect>OAuth2Api for OAuth2ApiClient<C> {
 
         let query_string = {
             let mut query = ::url::form_urlencoded::Serializer::new(String::new());
-            query.finish()
+            format!("?{}", query.finish())
         };
         let uri_str = format!("{}/oauth2/auth{}", configuration.base_path, query_string);
 
@@ -665,7 +665,7 @@ impl<C: hyper::client::Connect>OAuth2Api for OAuth2ApiClient<C> {
             for (key, val) in &auth_query {
                 query.append_pair(key, val);
             }
-            query.finish()
+            format!("?{}", query.finish())
         };
         let uri_str = format!("{}/oauth2/token{}", configuration.base_path, query_string);
 
@@ -732,7 +732,7 @@ impl<C: hyper::client::Connect>OAuth2Api for OAuth2ApiClient<C> {
             for (key, val) in &auth_query {
                 query.append_pair(key, val);
             }
-            query.finish()
+            format!("?{}", query.finish())
         };
         let uri_str = format!("{}/oauth2/consent/requests/{id}/reject{}", configuration.base_path, query_string, id=id);
 
@@ -801,7 +801,7 @@ impl<C: hyper::client::Connect>OAuth2Api for OAuth2ApiClient<C> {
             for (key, val) in &auth_query {
                 query.append_pair(key, val);
             }
-            query.finish()
+            format!("?{}", query.finish())
         };
         let uri_str = format!("{}/oauth2/revoke{}", configuration.base_path, query_string);
 
@@ -865,7 +865,7 @@ impl<C: hyper::client::Connect>OAuth2Api for OAuth2ApiClient<C> {
             for (key, val) in &auth_query {
                 query.append_pair(key, val);
             }
-            query.finish()
+            format!("?{}", query.finish())
         };
         let uri_str = format!("{}/clients/{id}{}", configuration.base_path, query_string, id=id);
 
@@ -936,7 +936,7 @@ impl<C: hyper::client::Connect>OAuth2Api for OAuth2ApiClient<C> {
             for (key, val) in &auth_query {
                 query.append_pair(key, val);
             }
-            query.finish()
+            format!("?{}", query.finish())
         };
         let uri_str = format!("{}/userinfo{}", configuration.base_path, query_string);
 
@@ -1003,7 +1003,7 @@ impl<C: hyper::client::Connect>OAuth2Api for OAuth2ApiClient<C> {
             for (key, val) in &auth_query {
                 query.append_pair(key, val);
             }
-            query.finish()
+            format!("?{}", query.finish())
         };
         let uri_str = format!("{}/.well-known/jwks.json{}", configuration.base_path, query_string);
 

@@ -64,7 +64,7 @@ impl<C: hyper::client::Connect>HealthApi for HealthApiClient<C> {
             for (key, val) in &auth_query {
                 query.append_pair(key, val);
             }
-            query.finish()
+            format!("?{}", query.finish())
         };
         let uri_str = format!("{}/health/metrics{}", configuration.base_path, query_string);
 
@@ -110,7 +110,7 @@ impl<C: hyper::client::Connect>HealthApi for HealthApiClient<C> {
 
         let query_string = {
             let mut query = ::url::form_urlencoded::Serializer::new(String::new());
-            query.finish()
+            format!("?{}", query.finish())
         };
         let uri_str = format!("{}/health/status{}", configuration.base_path, query_string);
 
