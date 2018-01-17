@@ -280,8 +280,8 @@ impl UserResp {
                     groups: groups.into_iter().map(|g| g.id().unwrap().clone()).collect()
                 }
             })
-            .map_err(|e| {
-                Error::server_error(format!("unable to find groups for user: {:?}", e))
+            .map_err(move |e| {
+                Error::server_error(format!("unable to find groups for user {}: {:?}", uuid_str, e))
             }))
     }
 }
@@ -396,12 +396,16 @@ pub fn auth_user(
 }
 
 #[get("/user", format = "application/json")]
-pub fn get_user(user: User, hydra: State<hydra::client::ClientBuilder>, handle: tokio_rocket::Handle) -> tokio_rocket::Future<Json<UserResp>, Json<Error>> {
+pub fn get_user(user: User, hydra: State<hydra::client::ClientBuilder>, handle: tokio_rocket::Handle) -> tokio_rocket::Future<Json<Result<UserResp, Error>>, String> {
     let client = hydra.build(&(handle.into()));
     tokio_rocket::Future(Box::new(
         UserResp::from_user(user, client)
-            .map(|u| Json(u))
-            .map_err(|e| Json(e))
+        .then(|res| {
+            Ok(res)
+        })
+        .map(|r| {
+            Json(r)
+        })
     ))
 }
 
