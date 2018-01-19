@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
+import LogoutLink from './components/LogoutLink';
 
 class UserDashboard extends Component {
   constructor(props) {
@@ -11,9 +12,9 @@ class UserDashboard extends Component {
   }
 
   render() {
-    console.log(this.state.user);
     return (
       <div>
+        <LogoutLink />
         <p>
           Welcome {this.state.user.username}!
         </p>

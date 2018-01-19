@@ -1,9 +1,17 @@
 import React, { Component } from 'react';
+import {
+  Route,
+  withRouter,
+} from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { getUser } from '../actions';
 import UserDashboard from '../user-dashboard';
 import LoginPage from '../components/LoginPage';
+import GithubLogin from '../github-login-component';
+import GithubOauthWindow from '../github-oauth-window';
+import UserConsent from '../user-consent';
+import { CreateAccount } from '../create-account';
 
 
 class ReactApp extends Component {
@@ -25,7 +33,33 @@ class ReactApp extends Component {
     if (loggedIn) {
       return <UserDashboard user={user.user} />;
     }
-    return <LoginPage />;
+
+    // Logged out routes
+    return (
+      <div>
+        <Route
+          exact
+          path="/"
+          render={props => <LoginPage {...props} />}
+        />
+        <Route
+          path="/github/oauth"
+          render={props => <GithubOauthWindow {...props} />}
+        />
+        <Route
+          path="/github/login"
+          render={props => <GithubLogin {...props} />}
+        />
+        <Route
+          path="/account/create"
+          render={props => <CreateAccount {...props} />}
+        />
+        <Route
+          path="/user/consent"
+          render={props => <UserConsent {...props} />}
+        />
+      </div>
+    );
   }
 }
 ReactApp.propTypes = {
@@ -49,4 +83,4 @@ const App = connect(
   null,
 )(ReactApp);
 
-export default App;
+export default withRouter(App);

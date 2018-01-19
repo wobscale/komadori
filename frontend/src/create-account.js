@@ -82,6 +82,7 @@ export class CreateAccount extends Component {
   }
 
   render() {
+    console.log('1');
     switch (this.state.step) {
       case steps.error:
         return (
