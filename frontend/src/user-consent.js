@@ -56,6 +56,18 @@ class UserConsent extends Component {
     });
   }
 
+  accept() {
+    HydraAPI.acceptConsent(this.state.consentId, this.state.consent.scopes).then(() => {
+      window.location = this.state.consent.redirect;
+    });
+  }
+
+  reject() {
+    HydraAPI.rejectConsent(this.state.consentId, 'User clicked reject').then(() => {
+      window.location = this.state.consent.redirect;
+    });
+  }
+
   render() {
     switch (this.state.step) {
       case steps.default:
@@ -120,18 +132,6 @@ class UserConsent extends Component {
           </div>
         );
     }
-  }
-
-  accept() {
-    HydraAPI.acceptConsent(this.state.consentId, this.state.consent.scopes).then(() => {
-      window.location = this.state.consent.redirect;
-    });
-  }
-
-  reject() {
-    HydraAPI.rejectConsent(this.state.consentId, 'User clicked reject').then(() => {
-      window.location = this.state.consent.redirect;
-    });
   }
 }
 

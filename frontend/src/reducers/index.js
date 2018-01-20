@@ -1,9 +1,5 @@
 import { combineReducers } from 'redux';
-import {
-  REQUEST_USER,
-  RECEIVE_USER,
-  RECEIVE_NO_USER,
-} from '../actions';
+import '../actions';
 
 function handleUserState(state = { isFetching: false, loaded: false, loggedIn: false }, action) {
   switch (action.type) {
@@ -28,6 +24,16 @@ function handleUserState(state = { isFetching: false, loaded: false, loggedIn: f
       });
     default:
       return state;
+  }
+}
+
+function handleConsentState(state = { isFetching: false, loaded: false, accepting: false, rejecting: false }, action) {
+  switch (action.type) {
+    case REQUEST_CONSENT_INFO:
+      return Object.assign({}, state, {
+        isFetching: true,
+        loaded: false,
+      });
   }
 }
 
