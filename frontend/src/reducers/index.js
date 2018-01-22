@@ -1,14 +1,9 @@
 import { combineReducers } from 'redux';
-import '../actions';
+import * as a from '../actions';
 
 function handleUserState(state = { isFetching: false, loaded: false, loggedIn: false }, action) {
   switch (action.type) {
-    case REQUEST_USER:
-      return Object.assign({}, state, {
-        isFetching: true,
-        loaded: false,
-      });
-    case RECEIVE_USER:
+    case a.RECEIVE_USER:
       return Object.assign({}, state, {
         isFetching: false,
         user: action.user,
@@ -16,7 +11,8 @@ function handleUserState(state = { isFetching: false, loaded: false, loggedIn: f
         loggedIn: true,
         lastUpdated: action.receivedAt,
       });
-    case RECEIVE_NO_USER:
+    case a.RECEIVE_NO_USER:
+    case a.USER_LOGGED_OUT:
       return Object.assign({}, state, {
         isFetching: false,
         loaded: true,
@@ -27,19 +23,39 @@ function handleUserState(state = { isFetching: false, loaded: false, loggedIn: f
   }
 }
 
-function handleConsentState(state = { isFetching: false, loaded: false, accepting: false, rejecting: false }, action) {
+function handlePartialUserState(state = { partialUser: null }, action) {
   switch (action.type) {
-    case REQUEST_CONSENT_INFO:
+    case a.RECEIVE_PARTIAL_USER:
+      return Object.assign({}, state, {
+        partialUser: action.partialUser,
+      });
+    default:
+      return state;
+  }
+}
+
+function handleConsentState(state = {
+  isFetching: false,
+  loaded: false,
+  accepting: false,
+  rejecting: false,
+}, action) {
+  switch (action.type) {
+    case a.REQUEST_CONSENT_INFO:
       return Object.assign({}, state, {
         isFetching: true,
         loaded: false,
       });
+    default:
+      return state;
   }
 }
 
 
 const rootReducer = combineReducers({
   user: handleUserState,
+  consent: handleConsentState,
+  partialUser: handlePartialUserState,
 });
 
 export default rootReducer;

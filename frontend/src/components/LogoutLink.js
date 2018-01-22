@@ -1,12 +1,13 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import PropTypes from 'prop-types';
 
-const LogoutLink = () => (
+const LogoutLink = props => (
   <div className="Logout">
-    <Link to="/user/logout">
-      <a href="#">Log out</a>
-    </Link>
+    <button onClick={props.onClick}>Log out</button>
   </div>
 );
+LogoutLink.propTypes = {
+  onClick: PropTypes.func.isRequired,
+};
 
 export default LogoutLink;

@@ -1,13 +1,14 @@
 import UserApi from '../user-api';
 import HydraAPI from '../hydra-api';
 
-export const REQUEST_USER = 'REQUEST_USER';
 export const RECEIVE_USER = 'RECEIVE_USER';
 export const RECEIVE_NO_USER = 'RECEIVE_NO_USER';
+export const RECEIVE_PARTIAL_USER = 'RECEIVE_PARTIAL_USER';
 
-export function requestUser() {
+function receivePartialUser(partialUser) {
   return {
-    type: REQUEST_USER,
+    type: RECEIVE_PARTIAL_USER,
+    partialUser,
   };
 }
 
@@ -47,13 +48,42 @@ export function doGetUser() {
   };
 }
 
-const REQUEST_CONSENT_INFO = 'REQUEST_CONSENT_INFO';
-const USER_CONSENT_FETCHING = 'USER_CONSENT_FETCHING';
-const USER_CONSENT_FETCHED = 'USER_CONSENT_FETCHED';
-const USER_GIVE_CONSENT = 'USER_GIVE_CONSENT';
-const USER_REJECT_CONSENT = 'USER_REJECT_CONSENT';
-const USER_GOT_CONSENT = 'USER_GOT_CONSENT';
-const USER_GOT_REJECT_CONSENT = 'USER_GOT_REJECT_CONSENT';
+export const USER_LOGOUT = 'USER_LOGOUT';
+export const USER_LOGGED_OUT = 'USER_LOGGED_OUT';
+
+export function userLogout() {
+  return {
+    type: USER_LOGOUT,
+  };
+}
+
+export function userLoggedOut() {
+  return {
+    type: USER_LOGGED_OUT,
+  };
+}
+
+export function doUserLogout() {
+  return (dispatch, getState) => {
+    const { user } = getState();
+    if (!user.loggedIn) {
+      throw new Error('cannot logout user: not logged in');
+    }
+
+    return UserApi.logout()
+      .then(() => {
+        dispatch(userLoggedOut());
+      });
+  };
+}
+
+export const REQUEST_CONSENT_INFO = 'REQUEST_CONSENT_INFO';
+export const USER_CONSENT_FETCHING = 'USER_CONSENT_FETCHING';
+export const USER_CONSENT_FETCHED = 'USER_CONSENT_FETCHED';
+export const USER_GIVE_CONSENT = 'USER_GIVE_CONSENT';
+export const USER_REJECT_CONSENT = 'USER_REJECT_CONSENT';
+export const USER_GOT_CONSENT = 'USER_GOT_CONSENT';
+export const USER_GOT_REJECT_CONSENT = 'USER_GOT_REJECT_CONSENT';
 
 export function userConsentFetching() {
   return {
@@ -73,9 +103,9 @@ export function userGiveConsent() {
   };
 }
 
-export function userReceiveConsent() {
+export function userGotConsent() {
   return {
-    type: USER_RECEIVE_CONSENT,
+    type: USER_GOT_CONSENT,
   };
 }
 
@@ -95,4 +125,21 @@ export function doGiveConsent() {
       .then((consent) => {
       });
   };
+}
+
+export function doHandleAuth(provider, providerInfo) {
+  return (dispatch) => {
+    UserApi.auth(provider, providerInfo.code, providerInfo.state)
+      .then((resp) => {
+        if (resp.type === 'PartialUser') {
+          // Needs to create an account
+          dispatch(receivePartialUser(resp));
+        } else if (resp.type === 'UserResp') {
+          dispatch(receiveUser(resp));
+        }
+      });
+  };
+}
+
+export function doCreateAccount(userInfo) {
 }

@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { connect } from 'react-redux';
 import { withRouter, Redirect } from 'react-router';
 import PropTypes from 'prop-types';
 import config from './config';
@@ -10,7 +11,7 @@ const steps = {
   created: 'created',
 };
 
-export class CreateAccount extends Component {
+export class CreateAccountReact extends Component {
   constructor(props) {
     super(props);
     const pu = this.props.location.state && this.props.location.state.partialUser;
@@ -149,9 +150,27 @@ export class CreateAccount extends Component {
     }
   }
 }
-CreateAccount.propTypes = {
+CreateAccountReact.propTypes = {
   location: PropTypes.object.isRequired,
   history: PropTypes.object.isRequired,
 };
+
+const mapStateToProps = (state) => {
+  const { user, partialUser } = state;
+  if (user.loggedIn) {
+    // Shouldn't happen
+    // TODO: dispatch error
+    alert('no');
+    return {};
+  }
+  return {
+    partialUser,
+  };
+};
+
+const CreateAccount = connect(
+  mapStateToProps,
+  null,
+)(CreateAccountReact);
 
 export default withRouter(CreateAccount);

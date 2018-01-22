@@ -4,7 +4,6 @@ import {
 } from 'react-router-dom';
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import config from './config';
 
 const steps = {
   error: 'error',
@@ -57,49 +56,8 @@ class GithubLogin extends Component {
         }
       }, 200);
     }).then((resp) => {
-      this.setState(() => ({
-        step: steps.verifyingLogin,
-      }));
-      return fetch(`${config.api}/user/auth`, {
-        mode: 'cors',
-        headers: { 'content-type': 'application/json' },
-        credentials: 'include',
-        method: 'POST',
-        body: JSON.stringify({
-          provider: 'github',
-          code: resp.code,
-          state: resp.state,
-        }),
-      });
-    }).then(resp => resp.json()).then((resp) => {
-      if (resp.Ok && resp.Ok.type === 'PartialUser') {
-        this.props.history.push({
-          pathname: '/account/create',
-          state: {
-            partialUser: resp.Ok,
-          },
-        });
-      } else if (resp.Ok && resp.Ok.type === 'UserResp') {
-        this.props.history.push({
-          pathname: '/',
-          state: {
-            user: resp.Ok,
-          },
-        });
-      } else {
-        this.setState(() => ({
-          step: steps.error,
-          err: 'Response did not include a user or partial user.',
-        }));
-      }
-    })
-      .catch((err) => {
-        // TODO better error handling here, pff alerts
-        this.setState(() => ({
-          step: steps.error,
-          err: err.toString(),
-        }));
-      });
+      this.props.onAuth(resp);
+    });
   }
 
   render() {
@@ -135,7 +93,7 @@ class GithubLogin extends Component {
   }
 }
 GithubLogin.propTypes = {
-  history: PropTypes.object.isRequired,
+  onAuth: PropTypes.func.isRequired,
 };
 
 export default withRouter(GithubLogin);

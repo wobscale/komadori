@@ -1,23 +1,25 @@
 import React, { Component } from 'react';
 import {
   Route,
+  Switch,
+  Redirect,
   withRouter,
 } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
-import { getUser } from '../actions';
+import { doGetUser } from '../actions';
 import UserDashboard from '../user-dashboard';
 import LoginPage from '../components/LoginPage';
-import GithubLogin from '../github-login-component';
+import GithubLogin from './LoginWithGithubContainer';
 import GithubOauthWindow from '../github-oauth-window';
 import UserConsent from '../user-consent';
-import { CreateAccount } from '../create-account';
+import CreateAccount from '../create-account';
 
 
 class ReactApp extends Component {
   componentDidMount() {
     const { dispatch } = this.props;
-    dispatch(getUser());
+    dispatch(doGetUser());
   }
 
   render() {
@@ -31,17 +33,33 @@ class ReactApp extends Component {
       );
     }
     if (loggedIn) {
-      return <UserDashboard user={user.user} />;
+      return (
+        <div>
+          <Route path="/" render={() => <Redirect to="/user/dashboard" />} />
+          <Route
+            path="/user/dashboard"
+            render={props => (
+              <UserDashboard {...props} user={user.user} />
+            )}
+          />
+        </div>
+      );
     }
 
     // Logged out routes
     return (
       <div>
-        <Route
-          exact
-          path="/"
-          render={props => <LoginPage {...props} />}
-        />
+        <Switch>
+          <Route
+            exact
+            path="/"
+            component={LoginPage}
+          />
+          <Route
+            path="/"
+            render={() => <Redirect to="/" />}
+          />
+        </Switch>
         <Route
           path="/github/oauth"
           render={props => <GithubOauthWindow {...props} />}
@@ -58,6 +76,7 @@ class ReactApp extends Component {
           path="/user/consent"
           render={props => <UserConsent {...props} />}
         />
+        { /* TODO: remember previous url to redirect back to */ }
       </div>
     );
   }
