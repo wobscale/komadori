@@ -1,5 +1,5 @@
-import UserApi from '../user-api';
-import HydraAPI from '../hydra-api';
+import UserApi from '../api/user';
+import HydraAPI from '../api/hydra';
 
 export const RECEIVE_USER = 'RECEIVE_USER';
 export const RECEIVE_NO_USER = 'RECEIVE_NO_USER';

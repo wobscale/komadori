@@ -2,8 +2,8 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import qs from 'query-string';
 
-import UserAPI from './user-api';
-import HydraAPI from './hydra-api';
+import UserAPI from './api/user';
+import HydraAPI from './api/hydra';
 
 const steps = {
   default: 'default',
