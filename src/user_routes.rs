@@ -178,6 +178,9 @@ impl<'a, 'r> FromRequest<'a, 'r> for User {
             }
         };
         match User::from_uuid(&*db, uuid_) {
+            Err(GetUserError::NoSuchUser) => {
+                Outcome::Failure((Status::NotFound, ()))
+            },
             Err(e) => {
                 error!("error using uuid to get user: {:?}", e);
                 Outcome::Failure((Status::InternalServerError, ()))
