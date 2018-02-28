@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+use serde_json;
 use rocket;
 use rocket::State;
 use rocket_contrib::json::Json;
@@ -63,7 +65,13 @@ pub fn accept_consent(
     handle: Handle,
 ) -> Future<Json<Result<(), Error>>, ()> {
     let client = hydra.build(&handle.into()).client();
+    // note: email is a required 'extra' attribute for some oauth proxies; set it to the uuid to
+    // allow this oidc to better interoperate with those even though technically this isn't right.
+    let mut extra_claims = HashMap::new();
+    extra_claims.insert("email".to_owned(), serde_json::Value::String(user.uuid.simple().to_string()));
+
     let accept = hydra_client::models::ConsentRequestAcceptance::new()
+        .with_id_token_extra(extra_claims)
         .with_subject(user.uuid.simple().to_string())
         .with_grant_scopes(req.scopes.clone());
     let resp = client.o_auth2_api()
@@ -71,13 +79,13 @@ pub fn accept_consent(
         .then(|res| {
             match res {
                 Ok(()) => Ok(Json(Ok(()))),
-                Err(e) => Err(Json(Err(Error::client_error(format!(
+                Err(e) => Ok(Json(Err(Error::client_error(format!(
                     "error accepting consent: {:?}",
                     e
                 ))))),
             }
-        }).map_err(|err: Json<Result<(), Error>>| {
-            ()
+        }).map_err(|e: Json<Result<(), Error>>| {
+            unreachable!(".then should have squashed Err: {:?}", e)
         });
 
     Future(Box::new(resp))
@@ -86,19 +94,19 @@ pub fn accept_consent(
 #[derive(Deserialize)]
 pub struct RejectConsent {
     id: String,
-    reason: String,
+    reason: Option<String>,
 }
 
 #[post("/oauth/consent/reject", format = "application/json", data = "<req>")]
 pub fn reject_consent(
     req: Json<RejectConsent>,
-    user: User,
+    _user: User,
     hydra: State<hydra::client::ClientBuilder>,
     handle: Handle,
 ) -> Future<Json<Result<(), Error>>, ()> {
     let client = hydra.build(&handle.into()).client();
     let accept = hydra_client::models::ConsentRequestRejection::new()
-        .with_reason("user rejected".to_string());
+        .with_reason(req.reason.clone().unwrap_or("user rejected consent".to_string()));
     let reject = client.o_auth2_api().reject_o_auth2_consent_request(&req.id, accept).then(|res| {
         match res {
             Ok(()) => Ok(Json(Ok(()))),
@@ -107,7 +115,7 @@ pub fn reject_consent(
                 e
             ))))),
         }
-    }).map_err(|_: ()| ());
+    }).map_err(|_: ()| unreachable!());
 
-    Future(Box::new(reject.map_err(|_| ())))
+    Future(Box::new(reject))
 }
