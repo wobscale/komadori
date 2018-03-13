@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { withRouter, Redirect } from 'react-router';
 import PropTypes from 'prop-types';
-import config from './config';
+import { doCreateAccount } from './actions';
 
 const steps = {
   error: 'error',
@@ -14,7 +14,7 @@ const steps = {
 export class CreateAccountReact extends Component {
   constructor(props) {
     super(props);
-    const pu = this.props.location.state && this.props.location.state.partialUser;
+    const pu = props.partialUser;
     this.state = {
       step: steps.default,
       email: '',
@@ -48,42 +48,12 @@ export class CreateAccountReact extends Component {
         step: steps.error,
         err: 'username is required',
       }));
-      return;
     }
 
-    fetch(`${config.api}/user/create`, {
-      mode: 'cors',
-      headers: { 'content-type': 'application/json' },
-      credentials: 'include',
-      method: 'POST',
-      body: JSON.stringify({
-        username: this.state.username,
-        email: this.state.email,
-        partial_user: this.state.partialUser,
-      }),
-    }).then(resp => resp.json()).then((resp) => {
-      if (resp.Ok && resp.Ok.uuid) {
-        this.setState({
-          step: steps.created,
-          username: resp.Ok.username,
-        });
-        this.props.history.push({
-          pathname: '/user/dashboard',
-          state: {
-            user: resp.Ok,
-          },
-        });
-      } else {
-        this.setState({
-          step: steps.error,
-          err: (resp.Err && resp.Err.message) ? resp.Err.message : 'unknown error',
-        });
-      }
-    });
+    this.props.createAccount(this.state);
   }
 
   render() {
-    console.log('1');
     switch (this.state.step) {
       case steps.error:
         return (
@@ -151,8 +121,8 @@ export class CreateAccountReact extends Component {
   }
 }
 CreateAccountReact.propTypes = {
-  location: PropTypes.object.isRequired,
-  history: PropTypes.object.isRequired,
+  partialUser: PropTypes.object.isRequired,
+  createAccount: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (state) => {
@@ -164,13 +134,19 @@ const mapStateToProps = (state) => {
     return {};
   }
   return {
-    partialUser,
+    partialUser: partialUser.partialUser,
   };
 };
 
+const mapDispatchToProps = dispatch => ({
+  createAccount: (userInfo) => {
+    dispatch(doCreateAccount(userInfo));
+  },
+});
+
 const CreateAccount = connect(
   mapStateToProps,
-  null,
+  mapDispatchToProps,
 )(CreateAccountReact);
 
 export default withRouter(CreateAccount);
