@@ -10,6 +10,11 @@ class UserAPI {
     }).then((resp) => {
       if (resp.status === 404) {
         return { loggedIn: false };
+      } else if (!resp.ok) {
+        return {
+          loggedIn: false,
+          error: `user get returned error: ${resp.status}`,
+        };
       }
       return resp.json().then((user) => {
         if (user.Ok) {
@@ -62,6 +67,30 @@ class UserAPI {
         }
 
         throw new Error('Response did not include a user or partial user.');
+      });
+    });
+  }
+
+  static create(userInfo) {
+    return fetch(`${config.api}/user/create`, {
+      mode: 'cors',
+      headers: { 'content-type': 'application/json' },
+      credentials: 'include',
+      method: 'POST',
+      body: JSON.stringify({
+        username: userInfo.username,
+        email: userInfo.email,
+        partial_user: userInfo.partialUser,
+      }),
+    }).then((resp) => {
+      if (!resp.ok) {
+        throw new Error(`could not create user: ${resp.status}`);
+      }
+      return resp.json().then((respJson) => {
+        if (respJson.Ok && respJson.Ok.uuid) {
+          return respJson.Ok;
+        }
+        throw new Error(`could not create user: ${respJson.Err}`);
       });
     });
   }
