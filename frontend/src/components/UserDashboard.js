@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import LogoutContainer from './containers/LogoutContainer';
+import LogoutContainer from '../containers/LogoutContainer';
 
 class UserDashboard extends Component {
   constructor(props) {
