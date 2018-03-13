@@ -44,7 +44,11 @@ export function doGetUser() {
         } else {
           dispatch(receiveNoUser());
         }
-      }); // TODO: .catch
+      })
+      .catch((e) => {
+        // TODO
+        console.error(e);
+      });
   };
 }
 
@@ -137,9 +141,21 @@ export function doHandleAuth(provider, providerInfo) {
         } else if (resp.type === 'UserResp') {
           dispatch(receiveUser(resp));
         }
+      })
+      .catch((e) => {
+        console.errror(e);
       });
   };
 }
 
 export function doCreateAccount(userInfo) {
+  return (dispatch) => {
+    UserApi.create(userInfo)
+      .then((resp) => {
+        dispatch(receiveUser(resp));
+      })
+      .catch((e) => {
+        console.errror(e);
+      });
+  };
 }
