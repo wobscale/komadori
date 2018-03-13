@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import logo from '../logo.svg';
 
-const LoginPage = () => (
+const LoginPage = (props) => (
   <div className="WobscaleAccounts">
     <header className="Wobscale-Login">
       <img src={logo} className="Wobscale-logo" alt="logo" />
@@ -11,7 +11,7 @@ const LoginPage = () => (
     <p>
       Login to your Wobscale Account
     </p>
-    <Link to="/github/login">
+    <Link to={{ pathname: '/github/login', search: props.location.search }}>
       <button type="button">
         Login with Github
       </button>
