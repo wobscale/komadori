@@ -1,7 +1,7 @@
 #![feature(plugin, custom_derive)]
 #![plugin(rocket_codegen)]
 
-extern crate tokio_rocket;
+extern crate multi_reactor_drifting;
 extern crate hyper;
 extern crate hydra_client;
 extern crate tokio_core;
@@ -54,7 +54,8 @@ use diesel::prelude::*;
 use std::env;
 use std::time::Instant;
 use std::io::Cursor;
-use futures::Future;
+use multi_reactor_drifting::{Handle, Future};
+use futures::Future as _TheTimeAfterNow;
 
 extern crate chrono;
 extern crate fern;
@@ -77,7 +78,7 @@ fn files(file: PathBuf) -> Option<NamedFile> {
 }
 
 #[get("/test")]
-fn test(handle: tokio_rocket::Handle, request_id: request_id::RequestID, request_id2: request_id::RequestID) -> tokio_rocket::Future<String, String> {
+fn test(handle: Handle, request_id: request_id::RequestID, request_id2: request_id::RequestID) -> Future<String, String> {
     let client = hyper::Client::new(&handle.into());
     let base_path = std::env::var("HYDRA_URL").unwrap();
     let c = hydra_oauthed_client::HydraClientWrapper::new(client, base_path.trim_right_matches("/"), "admin".to_owned(), "password".to_owned());
@@ -87,7 +88,7 @@ fn test(handle: tokio_rocket::Handle, request_id: request_id::RequestID, request
         panic!("");
     }
 
-    tokio_rocket::Future(Box::new(c.client().warden_api().get_group("users").map(|g| { g.id().unwrap().clone() })
+    Future(Box::new(c.client().warden_api().get_group("users").map(|g| { g.id().unwrap().clone() })
         .map_err(|e| format!("could not get group users: {:?}", e))))
 }
 

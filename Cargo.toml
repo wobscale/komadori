@@ -32,4 +32,4 @@ rocket = "0.3"
 rocket_codegen = "0.3"
 rocket_contrib = "0.3"
 
-tokio_rocket = { path = "./tokio_rocket" }
+multi-reactor_drifting = { git = "https://github.com/wobscale/multi-reactor_drifting" }

@@ -1,9 +1,0 @@
-[package]
-name = "tokio_rocket"
-version = "0.1.0"
-authors = ["Euan Kemp <euank@euank.com>"]
-
-[dependencies]
-tokio-core = "0.1"
-futures = "0.1"
-rocket = "0.3"
