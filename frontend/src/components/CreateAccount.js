@@ -1,7 +1,5 @@
-import React, { Component } from 'react';
+import React from 'react';
 import { withRouter, Redirect } from 'react-router';
-import PropTypes from 'prop-types';
-import config from '../config';
 
 const steps = {
   error: 'error',
@@ -65,10 +63,6 @@ const CreateAccount = (createStep) => {
     default:
       return <Redirect to="/" />;
   }
-}
-CreateAccount.propTypes = {
-  location: PropTypes.object.isRequired,
-  history: PropTypes.object.isRequired,
 };
 
 export default withRouter(CreateAccount);
