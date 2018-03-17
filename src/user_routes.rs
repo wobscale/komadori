@@ -1,8 +1,13 @@
 use std;
+use hydra_client;
+use hyper;
 use db;
+use futures::Future;
 use permissions;
 use oauth;
 use diesel;
+use tokio_rocket;
+use hydra_oauthed_client;
 use diesel::Connection;
 use diesel::result::Error as DieselErr;
 use rocket;
@@ -262,17 +267,22 @@ pub struct UserResp {
 }
 
 impl UserResp {
-    pub fn from_user(user: &User, hydra: &hydra::client::Client) -> Result<Self, Error> {
-        let groups = hydra.warden_get_group_names(user.uuid).map_err(|e| {
-            Error::server_error(format!("error getting groups for {:?}: {}", user, e))
-        })?;
-        Ok(UserResp {
-            uuid: user.uuid.simple().to_string(),
-            username: user.username.clone(),
-            role: user.role.clone(),
-            email: user.email.clone(),
-            groups: groups,
-        })
+    pub fn from_user(user: User, hydra: hydra_oauthed_client::HydraClientWrapper<hyper::client::HttpConnector>) -> Box<Future<Item = UserResp, Error = Error>> {
+        let uuid_str = user.uuid.simple().to_string();
+        let client = hydra.client();
+        Box::new(client.warden_api().find_groups_by_member(&uuid_str)
+            .map(move |groups| {
+                UserResp {
+                    uuid: user.uuid.simple().to_string(),
+                    username: user.username.clone(),
+                    role: user.role.clone(),
+                    email: user.email.clone(),
+                    groups: groups.into_iter().map(|g| g.id().unwrap().clone()).collect()
+                }
+            })
+            .map_err(|e| {
+                Error::server_error(format!("unable to find groups for user: {:?}", e))
+            }))
     }
 }
 
@@ -298,7 +308,8 @@ pub enum AuthUserResp {
 #[post("/user/auth", format = "application/json", data = "<req>")]
 pub fn auth_user(
     conn: db::Conn,
-    hydra: State<hydra::client::Client>,
+    hydra: State<hydra::client::ClientBuilder>,
+    handle: tokio_rocket::Handle,
     req: Json<AuthUserRequest>,
     github_oauth: State<github::OauthConfig>,
     mut cookies: Cookies,
@@ -366,7 +377,8 @@ pub fn auth_user(
                         "user_uuid".to_owned(),
                         u.uuid.simple().to_string(),
                     ));
-                    let ru = match UserResp::from_user(&u, &*hydra) {
+                    let hydra_client = hydra.build(&(handle.into()));
+                    let ru = match tokio_rocket::request_core_run(UserResp::from_user(u, hydra_client)) {
                         Err(e) => {
                             return Json(Err(e));
                         }
@@ -384,17 +396,21 @@ pub fn auth_user(
 }
 
 #[get("/user", format = "application/json")]
-pub fn get_user(user: User, hydra: State<hydra::client::Client>) -> Json<Result<UserResp, Error>> {
-    match UserResp::from_user(&user, &*hydra) {
-        Ok(user) => Json(Ok(user)),
-        Err(e) => Json(Err(e)),
-    }
+pub fn get_user(user: User, hydra: State<hydra::client::ClientBuilder>, handle: tokio_rocket::Handle) -> tokio_rocket::Future<Json<UserResp>, Json<Error>> {
+    let client = hydra.build(&(handle.into()));
+    tokio_rocket::Future(Box::new(
+        UserResp::from_user(user, client)
+            .map(|u| Json(u))
+            .map_err(|e| Json(e))
+    ))
 }
+
 
 #[post("/user/create", format = "application/json", data = "<req>")]
 pub fn create_user(
     conn: db::Conn,
-    hydra: State<hydra::client::Client>,
+    hydra: State<hydra::client::ClientBuilder>,
+    handle: tokio_rocket::Handle,
     req: Json<CreateUserRequest>,
     mut cookies: Cookies,
 ) -> Json<Result<UserResp, Error>> {
@@ -433,10 +449,13 @@ pub fn create_user(
         })
             .execute(&*conn)?;
 
+        let client = hydra.build(&(handle.into()));
+        let uuidstr = newuser.uuid.simple().to_string();
         // Note: if this changes, also change the hardcoded 'groups' in the userresp below
-        match hydra.warden_group_add_members(permissions::USER_GROUP, vec![newuser.uuid]) {
+        let add_res = client.client().warden_api().add_members_to_group(permissions::USER_GROUP, hydra_client::models::GroupMembers::new().with_members(vec![uuidstr]));
+        match tokio_rocket::request_core_run(add_res) {
             Err(e) => {
-                error!("error adding new user {:?} to users group: {}", newuser, e);
+                error!("error adding new user {:?} to users group: {:?}", newuser, e);
                 return Err(DieselErr::RollbackTransaction);
             }
             _ => {}

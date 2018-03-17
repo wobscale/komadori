@@ -1,6 +1,11 @@
 #![feature(plugin, custom_derive)]
 #![plugin(rocket_codegen)]
 
+extern crate tokio_rocket;
+extern crate hyper;
+extern crate hydra_client;
+extern crate tokio_core;
+extern crate hydra_oauthed_client;
 extern crate constant_time_eq;
 #[macro_use]
 extern crate diesel;
@@ -19,11 +24,14 @@ extern crate rocket_contrib;
 extern crate url;
 extern crate uuid;
 
+extern crate futures;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
 extern crate serde_json;
 
+mod request_id;
+mod util;
 mod hydra;
 mod schema;
 mod models;
@@ -46,6 +54,7 @@ use diesel::prelude::*;
 use std::env;
 use std::time::Instant;
 use std::io::Cursor;
+use futures::Future;
 
 extern crate chrono;
 extern crate fern;
@@ -65,6 +74,21 @@ fn healthz(conn: db::Conn) -> Result<String, rocket::response::Failure> {
 #[get("/<file..>", rank = 3)]
 fn files(file: PathBuf) -> Option<NamedFile> {
     NamedFile::open(Path::new("static/").join(file)).ok()
+}
+
+#[get("/test")]
+fn test(handle: tokio_rocket::Handle, request_id: request_id::RequestID, request_id2: request_id::RequestID) -> tokio_rocket::Future<String, String> {
+    let client = hyper::Client::new(&handle.into());
+    let base_path = std::env::var("HYDRA_URL").unwrap();
+    let c = hydra_oauthed_client::HydraClientWrapper::new(client, base_path.trim_right_matches("/"), "admin".to_owned(), "password".to_owned());
+
+    println!("{}", *request_id);
+    if *request_id != *request_id2 {
+        panic!("");
+    }
+
+    tokio_rocket::Future(Box::new(c.client().warden_api().get_group("users").map(|g| { g.id().unwrap().clone() })
+        .map_err(|e| format!("could not get group users: {:?}", e))))
 }
 
 fn main() {
@@ -101,14 +125,14 @@ fn main() {
         db::db_pool(uri).expect("error connecting to database")
     };
 
-    let hydra = {
-        hydra::client::Client::new(
+    let hydra_builder = {
+        hydra::client::ClientBuilder::new(
             &env::var("HYDRA_URL").expect("Must set HYDRA_URL"),
             &env::var("HYDRA_CLIENT_ID").expect("Must set HYDRA_CLIENT_ID"),
             &env::var("HYDRA_CLIENT_SECRET").expect("Must set HYDRA_CLIENT_SECRET"),
         )
     };
-    permissions::initialize_groups(&hydra).expect("could not initialize groups");
+    permissions::initialize_groups(&hydra_builder).unwrap();
 
     let github_oauth_config = {
         let client_id = env::var("GITHUB_CLIENT_ID").expect("GITHUB_CLIENT_ID must be set");
@@ -126,10 +150,11 @@ fn main() {
     }
 
     rkt
+        .attach(request_id::RequestIDFairing)
         .manage(pool)
         .manage(github_oauth_config)
-        .manage(hydra)
-        .mount("/", routes![healthz, files])
+        .manage(hydra_builder)
+        .mount("/", routes![healthz, files, test])
         .mount("/", user_routes::routes())
         .mount("/", admin_routes::routes())
         .mount("/", oauth_routes::routes())
