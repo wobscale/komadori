@@ -61,7 +61,8 @@ const CreateAccount = (createStep) => {
         </div>
       );
     default:
-      return <Redirect to="/" />;
+      // TODO
+      return (<b>unreachable?</b>);
   }
 };
 

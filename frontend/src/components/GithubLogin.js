@@ -87,7 +87,7 @@ class GithubLogin extends Component {
     }
     return (
       <div>
-        <Redirect to="/" />
+        <p>Logged in, you&quot;ll be redirected shortly</p>
       </div>
     );
   }

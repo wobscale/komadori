@@ -2,19 +2,16 @@ import React, { Component } from 'react';
 import {
   Route,
   Switch,
-  Redirect,
   withRouter,
 } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { doGetUser } from '../actions';
-import UserDashboard from './UserDashboardContainer';
-import LoginPage from '../components/LoginPage';
-import GithubLogin from './LoginWithGithubContainer';
 import GithubOauthWindow from '../github-oauth-window';
-import UserConsent from '../user-consent';
-import CreateAccount from '../create-account';
-
+import {
+  Login, CreateAccount, GithubLogin,
+  UserDashboard, UserConsent,
+} from './AuthedContainers';
 
 class ReactApp extends Component {
   componentDidMount() {
@@ -23,25 +20,14 @@ class ReactApp extends Component {
   }
 
   render() {
-    const { loading, loggedIn, user } = this.props;
+    const {
+      loading,
+    } = this.props;
 
     if (loading) {
       return (
         <div>
           <h2>Loading</h2>
-        </div>
-      );
-    }
-    if (loggedIn) {
-      return (
-        <div>
-          <Route path="/" render={() => <Redirect to="/user/dashboard" />} />
-          <Route
-            path="/user/dashboard"
-            render={props => (
-              <UserDashboard {...props} user={user.user} />
-            )}
-          />
         </div>
       );
     }
@@ -53,47 +39,45 @@ class ReactApp extends Component {
           <Route
             exact
             path="/"
-            component={LoginPage}
+            component={Login}
           />
           <Route
-            path="/"
-            render={() => <Redirect to="/" />}
+            path="/github/oauth"
+            component={GithubOauthWindow}
+          />
+          <Route
+            path="/github/login"
+            component={GithubLogin}
+          />
+          <Route
+            path="/account/create"
+            component={CreateAccount}
+          />
+          <Route
+            path="/user/dashboard"
+            component={UserDashboard}
+          />
+          <Route
+            path="/user/consent"
+            component={UserConsent}
           />
         </Switch>
-        <Route
-          path="/github/oauth"
-          render={props => <GithubOauthWindow {...props} />}
-        />
-        <Route
-          path="/github/login"
-          render={props => <GithubLogin {...props} />}
-        />
-        <Route
-          path="/account/create"
-          render={props => <CreateAccount {...props} />}
-        />
-        <Route
-          path="/user/consent"
-          render={props => <UserConsent {...props} />}
-        />
-        { /* TODO: remember previous url to redirect back to */ }
       </div>
     );
   }
 }
 ReactApp.propTypes = {
   loading: PropTypes.bool.isRequired,
-  loggedIn: PropTypes.bool.isRequired,
-  user: PropTypes.object.isRequired,
   dispatch: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (state) => {
-  const { user } = state;
+  const { user, partialUser } = state;
   return {
     loading: !user.loaded,
     loggedIn: user.loggedIn,
     user,
+    partialUser,
   };
 };
 

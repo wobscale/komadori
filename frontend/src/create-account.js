@@ -116,7 +116,7 @@ export class CreateAccountReact extends Component {
           </div>
         );
       default:
-        return <Redirect to="/" />;
+        return (<b>No valid step, not sure what happened</b>);
     }
   }
 }

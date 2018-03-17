@@ -143,7 +143,7 @@ export function doHandleAuth(provider, providerInfo) {
         }
       })
       .catch((e) => {
-        console.errror(e);
+        console.error(e);
       });
   };
 }
@@ -155,7 +155,7 @@ export function doCreateAccount(userInfo) {
         dispatch(receiveUser(resp));
       })
       .catch((e) => {
-        console.errror(e);
+        console.error(e);
       });
   };
 }
