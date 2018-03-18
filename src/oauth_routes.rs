@@ -21,6 +21,7 @@ pub struct ConsentId {
 
 #[derive(Serialize)]
 pub struct ConsentInfo {
+    id: String,
     client: String,
     scopes: Vec<String>,
     redirect: String,
@@ -40,6 +41,7 @@ pub fn get_consent_info(
                     client: info.client_id().unwrap().to_string(),
                     scopes: info.requested_scopes().unwrap().clone(),
                     redirect: info.redirect_url().unwrap().to_string(),
+                    id: info.id().unwrap().to_string(),
                 }))),
                 Err(e) => Ok(Json(Err(Error::client_error(format!(
                     "error getting info about consent request: {:?}",
