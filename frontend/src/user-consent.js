@@ -2,8 +2,8 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import qs from 'query-string';
 
-import UserAPI from './user-api';
-import HydraAPI from './hydra-api';
+import UserAPI from './api/user';
+import HydraAPI from './api/hydra';
 
 const steps = {
   default: 'default',
@@ -53,6 +53,18 @@ class UserConsent extends Component {
         step: steps.askConsent,
         consent,
       });
+    });
+  }
+
+  accept() {
+    HydraAPI.acceptConsent(this.state.consentId, this.state.consent.scopes).then(() => {
+      window.location = this.state.consent.redirect;
+    });
+  }
+
+  reject() {
+    HydraAPI.rejectConsent(this.state.consentId, 'User clicked reject').then(() => {
+      window.location = this.state.consent.redirect;
     });
   }
 
@@ -120,18 +132,6 @@ class UserConsent extends Component {
           </div>
         );
     }
-  }
-
-  accept() {
-    HydraAPI.acceptConsent(this.state.consentId, this.state.consent.scopes).then(() => {
-      window.location = this.state.consent.redirect;
-    });
-  }
-
-  reject() {
-    HydraAPI.rejectConsent(this.state.consentId, 'User clicked reject').then(() => {
-      window.location = this.state.consent.redirect;
-    });
   }
 }
 

@@ -1,11 +1,19 @@
 #![feature(plugin, custom_derive)]
 #![plugin(rocket_codegen)]
 
+extern crate multi_reactor_drifting;
+extern crate hyper;
+extern crate hydra_client;
+extern crate tokio_core;
+extern crate hydra_oauthed_client;
+extern crate constant_time_eq;
 #[macro_use]
 extern crate diesel;
 #[macro_use]
-extern crate diesel_codegen;
+extern crate diesel_migrations;
 extern crate github_rs;
+#[macro_use]
+extern crate lazy_static;
 extern crate oauth2;
 extern crate r2d2;
 extern crate r2d2_diesel;
@@ -16,11 +24,14 @@ extern crate rocket_contrib;
 extern crate url;
 extern crate uuid;
 
+extern crate futures;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
 extern crate serde_json;
 
+mod request_id;
+mod util;
 mod hydra;
 mod schema;
 mod models;
@@ -28,6 +39,7 @@ mod permissions;
 mod errors;
 mod db;
 mod oauth;
+mod admin_routes;
 mod user_routes;
 mod oauth_routes;
 mod github;
@@ -41,8 +53,9 @@ use std::path::{Path, PathBuf};
 use diesel::prelude::*;
 use std::env;
 use std::time::Instant;
-use rocket_contrib::Template;
 use std::io::Cursor;
+use multi_reactor_drifting::{Handle, Future};
+use futures::Future as _TheTimeAfterNow;
 
 extern crate chrono;
 extern crate fern;
@@ -64,6 +77,21 @@ fn files(file: PathBuf) -> Option<NamedFile> {
     NamedFile::open(Path::new("static/").join(file)).ok()
 }
 
+#[get("/test")]
+fn test(handle: Handle, request_id: request_id::RequestID, request_id2: request_id::RequestID) -> Future<String, String> {
+    let client = hyper::Client::new(&handle.into());
+    let base_path = std::env::var("HYDRA_URL").unwrap();
+    let c = hydra_oauthed_client::HydraClientWrapper::new(client, base_path.trim_right_matches("/"), "admin".to_owned(), "password".to_owned());
+
+    println!("{}", *request_id);
+    if *request_id != *request_id2 {
+        panic!("");
+    }
+
+    Future(Box::new(c.client().warden_api().get_group("users").map(|g| { g.id().unwrap().clone() })
+        .map_err(|e| format!("could not get group users: {:?}", e))))
+}
+
 fn main() {
     fern::Dispatch::new()
         .format(|out, message, record| {
@@ -75,9 +103,9 @@ fn main() {
                 message
             ))
         })
-        .level(log::LogLevelFilter::Warn)
-        .level_for("rocket", log::LogLevelFilter::Info)
-        .level_for("komadori", log::LogLevelFilter::Debug)
+        .level(log::LevelFilter::Warn)
+        .level_for("rocket", log::LevelFilter::Info)
+        .level_for("komadori", log::LevelFilter::Debug)
         .chain(std::io::stdout())
         .apply()
         .unwrap();
@@ -98,14 +126,14 @@ fn main() {
         db::db_pool(uri).expect("error connecting to database")
     };
 
-    let hydra = {
-        hydra::client::Client::new(
+    let hydra_builder = {
+        hydra::client::ClientBuilder::new(
             &env::var("HYDRA_URL").expect("Must set HYDRA_URL"),
             &env::var("HYDRA_CLIENT_ID").expect("Must set HYDRA_CLIENT_ID"),
             &env::var("HYDRA_CLIENT_SECRET").expect("Must set HYDRA_CLIENT_SECRET"),
         )
     };
-    permissions::initialize_groups(&hydra).expect("could not initialize groups");
+    permissions::initialize_groups(&hydra_builder).unwrap();
 
     let github_oauth_config = {
         let client_id = env::var("GITHUB_CLIENT_ID").expect("GITHUB_CLIENT_ID must be set");
@@ -122,12 +150,14 @@ fn main() {
         );
     }
 
-    rkt.attach(Template::fairing())
+    rkt
+        .attach(request_id::RequestIDFairing)
         .manage(pool)
         .manage(github_oauth_config)
-        .manage(hydra)
-        .mount("/", routes![healthz, files])
+        .manage(hydra_builder)
+        .mount("/", routes![healthz, files, test])
         .mount("/", user_routes::routes())
+        .mount("/", admin_routes::routes())
         .mount("/", oauth_routes::routes())
         .mount("/github", github::routes())
         .launch();

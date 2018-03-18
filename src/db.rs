@@ -8,10 +8,12 @@ use std::ops::Deref;
 
 embed_migrations!();
 
-pub fn db_pool(uri: &str) -> Result<Pool, r2d2::InitializationError> {
-    let config = r2d2::Config::default();
+pub type Pool = r2d2::Pool<ConnectionManager<PgConnection>>;
+
+pub fn db_pool(uri: &str) -> Result<Pool, r2d2::Error> {
     let manager = ConnectionManager::new(uri);
-    r2d2::Pool::new(config, manager)
+    r2d2::Pool::builder()
+        .build(manager)
 }
 
 pub fn run_migrations(pool: &Pool) -> Result<(), String> {
@@ -27,8 +29,6 @@ pub fn run_migrations(pool: &Pool) -> Result<(), String> {
     };
     Ok(())
 }
-
-pub type Pool = r2d2::Pool<ConnectionManager<PgConnection>>;
 
 // Sourced partially from https://rocket.rs/guide/state/#databases
 pub struct Conn(r2d2::PooledConnection<ConnectionManager<PgConnection>>);
