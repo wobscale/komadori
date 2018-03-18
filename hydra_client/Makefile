@@ -1,4 +1,4 @@
-HYDRA_VERSION=v0.10.10
+HYDRA_VERSION=v0.11.9
 
 generate: ./hydra-$(HYDRA_VERSION).swagger.json
 ifndef SWAGGER_CLI
