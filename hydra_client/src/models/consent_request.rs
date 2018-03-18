@@ -17,18 +17,15 @@ pub struct ConsentRequest {
   /// ClientID is the client id that initiated the OAuth2 request.
   #[serde(rename = "clientId")]
   client_id: Option<String>,
+  /// ExpiresAt is the time where the access request will expire.
+  #[serde(rename = "expiresAt")]
+  expires_at: Option<String>,
   /// ID is the id of this consent request.
   #[serde(rename = "id")]
   id: Option<String>,
   /// Redirect URL is the URL where the user agent should be redirected to after the consent has been accepted or rejected.
   #[serde(rename = "redirectUrl")]
   redirect_url: Option<String>,
-  #[serde(rename = "requestedAcr")]
-  requested_acr: Option<Vec<String>>,
-  #[serde(rename = "requestedMaxAge")]
-  requested_max_age: Option<i64>,
-  #[serde(rename = "requestedPrompt")]
-  requested_prompt: Option<String>,
   /// RequestedScopes represents a list of scopes that have been requested by the OAuth2 request initiator.
   #[serde(rename = "requestedScopes")]
   requested_scopes: Option<Vec<String>>
@@ -38,11 +35,9 @@ impl ConsentRequest {
   pub fn new() -> ConsentRequest {
     ConsentRequest {
       client_id: None,
+      expires_at: None,
       id: None,
       redirect_url: None,
-      requested_acr: None,
-      requested_max_age: None,
-      requested_prompt: None,
       requested_scopes: None
     }
   }
@@ -62,6 +57,23 @@ impl ConsentRequest {
 
   pub fn reset_client_id(&mut self) {
     self.client_id = None;
+  }
+
+  pub fn set_expires_at(&mut self, expires_at: String) {
+    self.expires_at = Some(expires_at);
+  }
+
+  pub fn with_expires_at(mut self, expires_at: String) -> ConsentRequest {
+    self.expires_at = Some(expires_at);
+    self
+  }
+
+  pub fn expires_at(&self) -> Option<&String> {
+    self.expires_at.as_ref()
+  }
+
+  pub fn reset_expires_at(&mut self) {
+    self.expires_at = None;
   }
 
   pub fn set_id(&mut self, id: String) {
@@ -96,57 +108,6 @@ impl ConsentRequest {
 
   pub fn reset_redirect_url(&mut self) {
     self.redirect_url = None;
-  }
-
-  pub fn set_requested_acr(&mut self, requested_acr: Vec<String>) {
-    self.requested_acr = Some(requested_acr);
-  }
-
-  pub fn with_requested_acr(mut self, requested_acr: Vec<String>) -> ConsentRequest {
-    self.requested_acr = Some(requested_acr);
-    self
-  }
-
-  pub fn requested_acr(&self) -> Option<&Vec<String>> {
-    self.requested_acr.as_ref()
-  }
-
-  pub fn reset_requested_acr(&mut self) {
-    self.requested_acr = None;
-  }
-
-  pub fn set_requested_max_age(&mut self, requested_max_age: i64) {
-    self.requested_max_age = Some(requested_max_age);
-  }
-
-  pub fn with_requested_max_age(mut self, requested_max_age: i64) -> ConsentRequest {
-    self.requested_max_age = Some(requested_max_age);
-    self
-  }
-
-  pub fn requested_max_age(&self) -> Option<&i64> {
-    self.requested_max_age.as_ref()
-  }
-
-  pub fn reset_requested_max_age(&mut self) {
-    self.requested_max_age = None;
-  }
-
-  pub fn set_requested_prompt(&mut self, requested_prompt: String) {
-    self.requested_prompt = Some(requested_prompt);
-  }
-
-  pub fn with_requested_prompt(mut self, requested_prompt: String) -> ConsentRequest {
-    self.requested_prompt = Some(requested_prompt);
-    self
-  }
-
-  pub fn requested_prompt(&self) -> Option<&String> {
-    self.requested_prompt.as_ref()
-  }
-
-  pub fn reset_requested_prompt(&mut self) {
-    self.requested_prompt = None;
   }
 
   pub fn set_requested_scopes(&mut self, requested_scopes: Vec<String>) {

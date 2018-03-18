@@ -274,7 +274,7 @@ impl UserResp {
     pub fn from_user(user: User, hydra: hydra_oauthed_client::HydraClientWrapper<hyper::client::HttpConnector>) -> Box<Fuuture<Item = UserResp, Error = Error>> {
         let uuid_str = user.uuid.simple().to_string();
         let client = hydra.client();
-        Box::new(client.warden_api().find_groups_by_member(&uuid_str)
+        Box::new(client.warden_api().list_groups(&uuid_str, std::i64::MAX, 0)
             .map(move |groups| {
                 UserResp {
                     uuid: user.uuid.simple().to_string(),

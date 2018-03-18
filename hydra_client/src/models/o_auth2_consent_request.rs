@@ -23,18 +23,9 @@ pub struct OAuth2ConsentRequest {
   /// ID is the id of this consent request.
   #[serde(rename = "id")]
   id: Option<String>,
-  /// RedirectURL is the URL where the user agent should be redirected to after the consent has been accepted or rejected.
+  /// Redirect URL is the URL where the user agent should be redirected to after the consent has been accepted or rejected.
   #[serde(rename = "redirectUrl")]
   redirect_url: Option<String>,
-  /// RequestedAuthenticationContextClassReference specifies an Authentication Context Class Reference value that identifies the Authentication Context Class that the authentication performed satisfied. The value \"0\" indicates the End-User authentication did not meet the requirements of ISO/IEC 29115 [ISO29115] level 1.  In summary ISO/IEC 29115 defines four levels, broadly summarized as follows.  acr=0 does not satisfy Level 1 and could be, for example, authentication using a long-lived browser cookie. Level 1 (acr=1): Minimal confidence in the asserted identity of the entity, but enough confidence that the entity is the same over consecutive authentication events. For example presenting a self-registered username or password. Level 2 (acr=2): There is some confidence in the asserted identity of the entity. For example confirming authentication using a mobile app (\"Something you have\"). Level 3 (acr=3): High confidence in an asserted identity of the entity. For example sending a code to a mobile phone or using Google Authenticator or a fingerprint scanner (\"Something you have and something you know\" / \"Something you are\") Level 4 (acr=4): Very high confidence in an asserted identity of the entity. Requires in-person identification.
-  #[serde(rename = "requestedAcr")]
-  requested_acr: Option<Vec<String>>,
-  /// MaxAge specifies the allowable elapsed time in seconds since the last time the End-User was actively authenticated by the OP. If the elapsed time is greater than this value, the OP MUST attempt to actively re-authenticate the End-User.
-  #[serde(rename = "requestedMaxAge")]
-  requested_max_age: Option<i64>,
-  /// Space delimited, case sensitive list of ASCII string values that specifies whether the Authorization Server prompts the End-User for reauthentication and consent. The defined values are:  none: The consent app MUST NOT display any authentication or consent user interface pages. An error is returned if an End-User is not already authenticated or the Client does not have pre-configured consent for the requested Claims or does not fulfill other conditions for processing the request. The error code will typically be login_required, interaction_required. This can be used as a method to check for existing authentication and/or consent. login: The consent app SHOULD prompt the End-User for reauthentication. If it cannot reauthenticate the End-User, it MUST return an error, typically login_required. consent: The consent app SHOULD prompt the End-User for consent before returning information to the Client. If it cannot obtain consent, it MUST return an error, typically consent_required. select_account: The consent app SHOULD prompt the End-User to select a user account. This enables an End-User who has multiple accounts at the Authorization Server to select amongst the multiple accounts that they might have current sessions for. If it cannot obtain an account selection choice made by the End-User, it MUST return an error, typically account_selection_required.  The prompt parameter can be used by the Client to make sure that the End-User is still present for the current session or to bring attention to the request. If this parameter contains none with any other value, an error is returned.
-  #[serde(rename = "requestedPrompt")]
-  requested_prompt: Option<String>,
   /// RequestedScopes represents a list of scopes that have been requested by the OAuth2 request initiator.
   #[serde(rename = "requestedScopes")]
   requested_scopes: Option<Vec<String>>
@@ -47,9 +38,6 @@ impl OAuth2ConsentRequest {
       expires_at: None,
       id: None,
       redirect_url: None,
-      requested_acr: None,
-      requested_max_age: None,
-      requested_prompt: None,
       requested_scopes: None
     }
   }
@@ -120,57 +108,6 @@ impl OAuth2ConsentRequest {
 
   pub fn reset_redirect_url(&mut self) {
     self.redirect_url = None;
-  }
-
-  pub fn set_requested_acr(&mut self, requested_acr: Vec<String>) {
-    self.requested_acr = Some(requested_acr);
-  }
-
-  pub fn with_requested_acr(mut self, requested_acr: Vec<String>) -> OAuth2ConsentRequest {
-    self.requested_acr = Some(requested_acr);
-    self
-  }
-
-  pub fn requested_acr(&self) -> Option<&Vec<String>> {
-    self.requested_acr.as_ref()
-  }
-
-  pub fn reset_requested_acr(&mut self) {
-    self.requested_acr = None;
-  }
-
-  pub fn set_requested_max_age(&mut self, requested_max_age: i64) {
-    self.requested_max_age = Some(requested_max_age);
-  }
-
-  pub fn with_requested_max_age(mut self, requested_max_age: i64) -> OAuth2ConsentRequest {
-    self.requested_max_age = Some(requested_max_age);
-    self
-  }
-
-  pub fn requested_max_age(&self) -> Option<&i64> {
-    self.requested_max_age.as_ref()
-  }
-
-  pub fn reset_requested_max_age(&mut self) {
-    self.requested_max_age = None;
-  }
-
-  pub fn set_requested_prompt(&mut self, requested_prompt: String) {
-    self.requested_prompt = Some(requested_prompt);
-  }
-
-  pub fn with_requested_prompt(mut self, requested_prompt: String) -> OAuth2ConsentRequest {
-    self.requested_prompt = Some(requested_prompt);
-    self
-  }
-
-  pub fn requested_prompt(&self) -> Option<&String> {
-    self.requested_prompt.as_ref()
-  }
-
-  pub fn reset_requested_prompt(&mut self) {
-    self.requested_prompt = None;
   }
 
   pub fn set_requested_scopes(&mut self, requested_scopes: Vec<String>) {
