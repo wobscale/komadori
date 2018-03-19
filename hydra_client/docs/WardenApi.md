@@ -9,8 +9,8 @@ Method | HTTP request | Description
 [**delete_group**](WardenApi.md#delete_group) | **Delete** /warden/groups/{id} | Delete a group by id
 [**does_warden_allow_access_request**](WardenApi.md#does_warden_allow_access_request) | **Post** /warden/allowed | Check if an access request is valid (without providing an access token)
 [**does_warden_allow_token_access_request**](WardenApi.md#does_warden_allow_token_access_request) | **Post** /warden/token/allowed | Check if an access request is valid (providing an access token)
-[**find_groups_by_member**](WardenApi.md#find_groups_by_member) | **Get** /warden/groups | Find groups by member
 [**get_group**](WardenApi.md#get_group) | **Get** /warden/groups/{id} | Get a group by id
+[**list_groups**](WardenApi.md#list_groups) | **Get** /warden/groups | List groups
 [**remove_members_from_group**](WardenApi.md#remove_members_from_group) | **Delete** /warden/groups/{id}/members | Remove members from a group
 
 
@@ -184,34 +184,6 @@ Name | Type | Description  | Notes
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
-# **find_groups_by_member**
-> Vec<::models::Group> find_groups_by_member(ctx, member)
-Find groups by member
-
-The subject making the request needs to be assigned to a policy containing:  ``` { \"resources\": [\"rn:hydra:warden:groups\"], \"actions\": [\"list\"], \"effect\": \"allow\" } ```
-
-### Required Parameters
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
- **ctx** | **context.Context** | context containing the authentication | nil if no authentication
-  **member** | **String**| The id of the member to look up. | 
-
-### Return type
-
-[**Vec<::models::Group>**](group.md)
-
-### Authorization
-
-[oauth2](../README.md#oauth2)
-
-### HTTP request headers
-
- - **Content-Type**: application/json
- - **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
 # **get_group**
 > ::models::Group get_group(ctx, id)
 Get a group by id
@@ -228,6 +200,43 @@ Name | Type | Description  | Notes
 ### Return type
 
 [**::models::Group**](group.md)
+
+### Authorization
+
+[oauth2](../README.md#oauth2)
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **list_groups**
+> Vec<::models::Group> list_groups(ctx, optional)
+List groups
+
+The subject making the request needs to be assigned to a policy containing:  ``` { \"resources\": [\"rn:hydra:warden:groups\"], \"actions\": [\"list\"], \"effect\": \"allow\" } ```
+
+### Required Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **ctx** | **context.Context** | context containing the authentication | nil if no authentication
+ **optional** | **map[string]interface{}** | optional parameters | nil if no parameters
+
+### Optional Parameters
+Optional parameters are passed through a map[string]interface{}.
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **member** | **String**| The id of the member to look up. | 
+ **limit** | **i64**| The maximum amount of policies returned. | 
+ **offset** | **i64**| The offset from where to start looking. | 
+
+### Return type
+
+[**Vec<::models::Group>**](group.md)
 
 ### Authorization
 

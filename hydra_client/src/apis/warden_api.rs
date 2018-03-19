@@ -10,13 +10,15 @@
 
 use std::rc::Rc;
 use std::borrow::Borrow;
+use std::borrow::Cow;
 use std::collections::HashMap;
 
 use hyper;
-
 use serde_json;
 use futures;
 use futures::{Future, Stream};
+
+use hyper::header::UserAgent;
 
 use super::{Error, configuration};
 
@@ -38,8 +40,8 @@ pub trait WardenApi {
     fn delete_group(&self, id: &str) -> Box<Future<Item = (), Error = Error<serde_json::Value>>>;
     fn does_warden_allow_access_request(&self, body: ::models::WardenAccessRequest) -> Box<Future<Item = ::models::WardenAccessRequestResponse, Error = Error<serde_json::Value>>>;
     fn does_warden_allow_token_access_request(&self, body: ::models::WardenTokenAccessRequest) -> Box<Future<Item = ::models::WardenTokenAccessRequestResponse, Error = Error<serde_json::Value>>>;
-    fn find_groups_by_member(&self, member: &str) -> Box<Future<Item = Vec<::models::Group>, Error = Error<serde_json::Value>>>;
     fn get_group(&self, id: &str) -> Box<Future<Item = ::models::Group, Error = Error<serde_json::Value>>>;
+    fn list_groups(&self, member: &str, limit: i64, offset: i64) -> Box<Future<Item = Vec<::models::Group>, Error = Error<serde_json::Value>>>;
     fn remove_members_from_group(&self, id: &str, body: ::models::GroupMembers) -> Box<Future<Item = (), Error = Error<serde_json::Value>>>;
 }
 
@@ -81,6 +83,10 @@ impl<C: hyper::client::Connect>WardenApi for WardenApiClient<C> {
         let mut uri: hyper::Uri = uri_str.parse().unwrap();
 
         let mut req = hyper::Request::new(method, uri);
+
+        if let Some(ref user_agent) = configuration.user_agent {
+            req.headers_mut().set(UserAgent::new(Cow::Owned(user_agent.clone())));
+        }
 
 
         for (key, val) in auth_headers {
@@ -149,6 +155,10 @@ impl<C: hyper::client::Connect>WardenApi for WardenApiClient<C> {
         let mut uri: hyper::Uri = uri_str.parse().unwrap();
 
         let mut req = hyper::Request::new(method, uri);
+
+        if let Some(ref user_agent) = configuration.user_agent {
+            req.headers_mut().set(UserAgent::new(Cow::Owned(user_agent.clone())));
+        }
 
 
         for (key, val) in auth_headers {
@@ -221,6 +231,10 @@ impl<C: hyper::client::Connect>WardenApi for WardenApiClient<C> {
 
         let mut req = hyper::Request::new(method, uri);
 
+        if let Some(ref user_agent) = configuration.user_agent {
+            req.headers_mut().set(UserAgent::new(Cow::Owned(user_agent.clone())));
+        }
+
 
         for (key, val) in auth_headers {
             req.headers_mut().set_raw(key, val);
@@ -284,6 +298,10 @@ impl<C: hyper::client::Connect>WardenApi for WardenApiClient<C> {
         let mut uri: hyper::Uri = uri_str.parse().unwrap();
 
         let mut req = hyper::Request::new(method, uri);
+
+        if let Some(ref user_agent) = configuration.user_agent {
+            req.headers_mut().set(UserAgent::new(Cow::Owned(user_agent.clone())));
+        }
 
 
         for (key, val) in auth_headers {
@@ -356,6 +374,10 @@ impl<C: hyper::client::Connect>WardenApi for WardenApiClient<C> {
 
         let mut req = hyper::Request::new(method, uri);
 
+        if let Some(ref user_agent) = configuration.user_agent {
+            req.headers_mut().set(UserAgent::new(Cow::Owned(user_agent.clone())));
+        }
+
 
         for (key, val) in auth_headers {
             req.headers_mut().set_raw(key, val);
@@ -385,74 +407,6 @@ impl<C: hyper::client::Connect>WardenApi for WardenApiClient<C> {
             })
             .and_then(|body| {
                 let parsed: Result<::models::WardenTokenAccessRequestResponse, _> = serde_json::from_slice(&body);
-                parsed.map_err(|e| Error::from(e))
-            })
-        )
-    }
-
-    fn find_groups_by_member(&self, member: &str) -> Box<Future<Item = Vec<::models::Group>, Error = Error<serde_json::Value>>> {
-        let configuration: &configuration::Configuration<C> = self.configuration.borrow();
-
-        let mut auth_headers = HashMap::<String, String>::new();
-        let mut auth_query = HashMap::<String, String>::new();
-        {
-            match configuration.oauth_access_token {
-                Some(ref token) => {
-                    let auth = hyper::header::Authorization(
-                        hyper::header::Bearer {
-                            token: token.to_owned(),
-                        }
-                    );
-                    auth_headers.insert("Authorization".to_owned(), format!("{}", auth));
-                }
-                None => {}
-            }
-        };
-        let method = hyper::Method::Get;
-
-        let query_string = {
-            let mut query = ::url::form_urlencoded::Serializer::new(String::new());
-            query.append_pair("member", &member.to_string());
-            for (key, val) in &auth_query {
-                query.append_pair(key, val);
-            }
-            format!("?{}", query.finish())
-        };
-        let uri_str = format!("{}/warden/groups{}", configuration.base_path, query_string);
-
-        // TODO(farcaller): handle error
-        // if let Err(e) = uri {
-        //     return Box::new(futures::future::err(e));
-        // }
-        let mut uri: hyper::Uri = uri_str.parse().unwrap();
-
-        let mut req = hyper::Request::new(method, uri);
-
-
-        for (key, val) in auth_headers {
-            req.headers_mut().set_raw(key, val);
-        }
-
-
-        // send request
-        Box::new(
-        configuration.client.request(req)
-            .map_err(|e| Error::from(e))
-            .and_then(|resp| {
-                let status = resp.status();
-                resp.body().concat2()
-                    .and_then(move |body| Ok((status, body)))
-                    .map_err(|e| Error::from(e))
-            })
-            .and_then(|(status, body)| {
-                if status.is_success() {
-                    Ok(body)
-                } else {
-                    Err(Error::from((status, &*body)))
-                }
-            })
-            .and_then(|body| {
-                let parsed: Result<Vec<::models::Group>, _> = serde_json::from_slice(&body);
                 parsed.map_err(|e| Error::from(e))
             })
         )
@@ -495,6 +449,10 @@ impl<C: hyper::client::Connect>WardenApi for WardenApiClient<C> {
 
         let mut req = hyper::Request::new(method, uri);
 
+        if let Some(ref user_agent) = configuration.user_agent {
+            req.headers_mut().set(UserAgent::new(Cow::Owned(user_agent.clone())));
+        }
+
 
         for (key, val) in auth_headers {
             req.headers_mut().set_raw(key, val);
@@ -520,6 +478,80 @@ impl<C: hyper::client::Connect>WardenApi for WardenApiClient<C> {
             })
             .and_then(|body| {
                 let parsed: Result<::models::Group, _> = serde_json::from_slice(&body);
+                parsed.map_err(|e| Error::from(e))
+            })
+        )
+    }
+
+    fn list_groups(&self, member: &str, limit: i64, offset: i64) -> Box<Future<Item = Vec<::models::Group>, Error = Error<serde_json::Value>>> {
+        let configuration: &configuration::Configuration<C> = self.configuration.borrow();
+
+        let mut auth_headers = HashMap::<String, String>::new();
+        let mut auth_query = HashMap::<String, String>::new();
+        {
+            match configuration.oauth_access_token {
+                Some(ref token) => {
+                    let auth = hyper::header::Authorization(
+                        hyper::header::Bearer {
+                            token: token.to_owned(),
+                        }
+                    );
+                    auth_headers.insert("Authorization".to_owned(), format!("{}", auth));
+                }
+                None => {}
+            }
+        };
+        let method = hyper::Method::Get;
+
+        let query_string = {
+            let mut query = ::url::form_urlencoded::Serializer::new(String::new());
+            query.append_pair("member", &member.to_string());
+            query.append_pair("limit", &limit.to_string());
+            query.append_pair("offset", &offset.to_string());
+            for (key, val) in &auth_query {
+                query.append_pair(key, val);
+            }
+            format!("?{}", query.finish())
+        };
+        let uri_str = format!("{}/warden/groups{}", configuration.base_path, query_string);
+
+        // TODO(farcaller): handle error
+        // if let Err(e) = uri {
+        //     return Box::new(futures::future::err(e));
+        // }
+        let mut uri: hyper::Uri = uri_str.parse().unwrap();
+
+        let mut req = hyper::Request::new(method, uri);
+
+        if let Some(ref user_agent) = configuration.user_agent {
+            req.headers_mut().set(UserAgent::new(Cow::Owned(user_agent.clone())));
+        }
+
+
+        for (key, val) in auth_headers {
+            req.headers_mut().set_raw(key, val);
+        }
+
+
+        // send request
+        Box::new(
+        configuration.client.request(req)
+            .map_err(|e| Error::from(e))
+            .and_then(|resp| {
+                let status = resp.status();
+                resp.body().concat2()
+                    .and_then(move |body| Ok((status, body)))
+                    .map_err(|e| Error::from(e))
+            })
+            .and_then(|(status, body)| {
+                if status.is_success() {
+                    Ok(body)
+                } else {
+                    Err(Error::from((status, &*body)))
+                }
+            })
+            .and_then(|body| {
+                let parsed: Result<Vec<::models::Group>, _> = serde_json::from_slice(&body);
                 parsed.map_err(|e| Error::from(e))
             })
         )
@@ -561,6 +593,10 @@ impl<C: hyper::client::Connect>WardenApi for WardenApiClient<C> {
         let mut uri: hyper::Uri = uri_str.parse().unwrap();
 
         let mut req = hyper::Request::new(method, uri);
+
+        if let Some(ref user_agent) = configuration.user_agent {
+            req.headers_mut().set(UserAgent::new(Cow::Owned(user_agent.clone())));
+        }
 
 
         for (key, val) in auth_headers {

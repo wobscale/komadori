@@ -10,13 +10,15 @@
 
 use std::rc::Rc;
 use std::borrow::Borrow;
+use std::borrow::Cow;
 use std::collections::HashMap;
 
 use hyper;
-
 use serde_json;
 use futures;
 use futures::{Future, Stream};
+
+use hyper::header::UserAgent;
 
 use super::{Error, configuration};
 
@@ -78,6 +80,10 @@ impl<C: hyper::client::Connect>PolicyApi for PolicyApiClient<C> {
         let mut uri: hyper::Uri = uri_str.parse().unwrap();
 
         let mut req = hyper::Request::new(method, uri);
+
+        if let Some(ref user_agent) = configuration.user_agent {
+            req.headers_mut().set(UserAgent::new(Cow::Owned(user_agent.clone())));
+        }
 
 
         for (key, val) in auth_headers {
@@ -150,6 +156,10 @@ impl<C: hyper::client::Connect>PolicyApi for PolicyApiClient<C> {
 
         let mut req = hyper::Request::new(method, uri);
 
+        if let Some(ref user_agent) = configuration.user_agent {
+            req.headers_mut().set(UserAgent::new(Cow::Owned(user_agent.clone())));
+        }
+
 
         for (key, val) in auth_headers {
             req.headers_mut().set_raw(key, val);
@@ -213,6 +223,10 @@ impl<C: hyper::client::Connect>PolicyApi for PolicyApiClient<C> {
         let mut uri: hyper::Uri = uri_str.parse().unwrap();
 
         let mut req = hyper::Request::new(method, uri);
+
+        if let Some(ref user_agent) = configuration.user_agent {
+            req.headers_mut().set(UserAgent::new(Cow::Owned(user_agent.clone())));
+        }
 
 
         for (key, val) in auth_headers {
@@ -283,6 +297,10 @@ impl<C: hyper::client::Connect>PolicyApi for PolicyApiClient<C> {
 
         let mut req = hyper::Request::new(method, uri);
 
+        if let Some(ref user_agent) = configuration.user_agent {
+            req.headers_mut().set(UserAgent::new(Cow::Owned(user_agent.clone())));
+        }
+
 
         for (key, val) in auth_headers {
             req.headers_mut().set_raw(key, val);
@@ -349,6 +367,10 @@ impl<C: hyper::client::Connect>PolicyApi for PolicyApiClient<C> {
         let mut uri: hyper::Uri = uri_str.parse().unwrap();
 
         let mut req = hyper::Request::new(method, uri);
+
+        if let Some(ref user_agent) = configuration.user_agent {
+            req.headers_mut().set(UserAgent::new(Cow::Owned(user_agent.clone())));
+        }
 
 
         for (key, val) in auth_headers {

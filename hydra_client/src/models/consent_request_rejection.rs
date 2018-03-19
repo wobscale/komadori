@@ -14,9 +14,6 @@ use serde_json::Value;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ConsentRequestRejection {
-  /// Error can be used to return an OpenID Connect or OAuth 2.0 error to the OAuth 2.0 client, such as login_required, interaction_required, consent_required.
-  #[serde(rename = "error")]
-  error: Option<String>,
   /// Reason represents the reason why the user rejected the consent request.
   #[serde(rename = "reason")]
   reason: Option<String>
@@ -25,26 +22,8 @@ pub struct ConsentRequestRejection {
 impl ConsentRequestRejection {
   pub fn new() -> ConsentRequestRejection {
     ConsentRequestRejection {
-      error: None,
       reason: None
     }
-  }
-
-  pub fn set_error(&mut self, error: String) {
-    self.error = Some(error);
-  }
-
-  pub fn with_error(mut self, error: String) -> ConsentRequestRejection {
-    self.error = Some(error);
-    self
-  }
-
-  pub fn error(&self) -> Option<&String> {
-    self.error.as_ref()
-  }
-
-  pub fn reset_error(&mut self) {
-    self.error = None;
   }
 
   pub fn set_reason(&mut self, reason: String) {

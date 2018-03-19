@@ -17,18 +17,12 @@ pub struct ConsentRequestAcceptance {
   /// AccessTokenExtra represents arbitrary data that will be added to the access token and that will be returned on introspection and warden requests.
   #[serde(rename = "accessTokenExtra")]
   access_token_extra: Option<::std::collections::HashMap<String, Value>>,
-  /// AuthTime is the time when the End-User authentication occurred. Its value is a JSON number representing the number of seconds from 1970-01-01T0:0:0Z as measured in UTC until the date/time.
-  #[serde(rename = "authTime")]
-  auth_time: Option<i64>,
   /// A list of scopes that the user agreed to grant. It should be a subset of requestedScopes from the consent request.
   #[serde(rename = "grantScopes")]
   grant_scopes: Option<Vec<String>>,
   /// IDTokenExtra represents arbitrary data that will be added to the ID token. The ID token will only be issued if the user agrees to it and if the client requested an ID token.
   #[serde(rename = "idTokenExtra")]
   id_token_extra: Option<::std::collections::HashMap<String, Value>>,
-  /// ProvidedAuthenticationContextClassReference specifies an Authentication Context Class Reference value that identifies the Authentication Context Class that the authentication performed satisfied. The value \"0\" indicates the End-User authentication did not meet the requirements of ISO/IEC 29115 [ISO29115] level 1.  In summary ISO/IEC 29115 defines four levels, broadly summarized as follows.  acr=0 does not satisfy Level 1 and could be, for example, authentication using a long-lived browser cookie. Level 1 (acr=1): Minimal confidence in the asserted identity of the entity, but enough confidence that the entity is the same over consecutive authentication events. For example presenting a self-registered username or password. Level 2 (acr=2): There is some confidence in the asserted identity of the entity. For example confirming authentication using a mobile app (\"Something you have\"). Level 3 (acr=3): High confidence in an asserted identity of the entity. For example sending a code to a mobile phone or using Google Authenticator or a fingerprint scanner (\"Something you have and something you know\" / \"Something you are\") Level 4 (acr=4): Very high confidence in an asserted identity of the entity. Requires in-person identification.
-  #[serde(rename = "providedAcr")]
-  provided_acr: Option<String>,
   /// Subject represents a unique identifier of the user (or service, or legal entity, ...) that accepted the OAuth2 request.
   #[serde(rename = "subject")]
   subject: Option<String>
@@ -38,10 +32,8 @@ impl ConsentRequestAcceptance {
   pub fn new() -> ConsentRequestAcceptance {
     ConsentRequestAcceptance {
       access_token_extra: None,
-      auth_time: None,
       grant_scopes: None,
       id_token_extra: None,
-      provided_acr: None,
       subject: None
     }
   }
@@ -61,23 +53,6 @@ impl ConsentRequestAcceptance {
 
   pub fn reset_access_token_extra(&mut self) {
     self.access_token_extra = None;
-  }
-
-  pub fn set_auth_time(&mut self, auth_time: i64) {
-    self.auth_time = Some(auth_time);
-  }
-
-  pub fn with_auth_time(mut self, auth_time: i64) -> ConsentRequestAcceptance {
-    self.auth_time = Some(auth_time);
-    self
-  }
-
-  pub fn auth_time(&self) -> Option<&i64> {
-    self.auth_time.as_ref()
-  }
-
-  pub fn reset_auth_time(&mut self) {
-    self.auth_time = None;
   }
 
   pub fn set_grant_scopes(&mut self, grant_scopes: Vec<String>) {
@@ -112,23 +87,6 @@ impl ConsentRequestAcceptance {
 
   pub fn reset_id_token_extra(&mut self) {
     self.id_token_extra = None;
-  }
-
-  pub fn set_provided_acr(&mut self, provided_acr: String) {
-    self.provided_acr = Some(provided_acr);
-  }
-
-  pub fn with_provided_acr(mut self, provided_acr: String) -> ConsentRequestAcceptance {
-    self.provided_acr = Some(provided_acr);
-    self
-  }
-
-  pub fn provided_acr(&self) -> Option<&String> {
-    self.provided_acr.as_ref()
-  }
-
-  pub fn reset_provided_acr(&mut self) {
-    self.provided_acr = None;
   }
 
   pub fn set_subject(&mut self, subject: String) {
