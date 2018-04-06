@@ -1,5 +1,4 @@
 import UserApi from '../api/user';
-import HydraAPI from '../api/hydra';
 
 export const RECEIVE_USER = 'RECEIVE_USER';
 export const RECEIVE_NO_USER = 'RECEIVE_NO_USER';
@@ -110,24 +109,6 @@ export function userGiveConsent() {
 export function userGotConsent() {
   return {
     type: USER_GOT_CONSENT,
-  };
-}
-
-export function doGetConsent() {
-  return (dispatch, getState) => {
-    const { consent } = getState();
-  };
-}
-
-export function doGiveConsent() {
-  return (dispatch, getState) => {
-    const { user, consentFlow } = getState();
-    if (!user.loggedIn) {
-      throw new Error('Must be logged in');
-    }
-    HydraAPI.acceptConsent(consentFlow.id, consentFlow.scopes)
-      .then((consent) => {
-      });
   };
 }
 
