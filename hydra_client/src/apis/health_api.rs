@@ -46,18 +46,13 @@ impl<C: hyper::client::Connect>HealthApi for HealthApiClient<C> {
 
         let mut auth_headers = HashMap::<String, String>::new();
         let mut auth_query = HashMap::<String, String>::new();
-        {
-            match configuration.oauth_access_token {
-                Some(ref token) => {
-                    let auth = hyper::header::Authorization(
-                        hyper::header::Bearer {
-                            token: token.to_owned(),
-                        }
-                    );
-                    auth_headers.insert("Authorization".to_owned(), format!("{}", auth));
+        if let Some(ref token) = configuration.oauth_access_token {
+            let auth = hyper::header::Authorization(
+                hyper::header::Bearer {
+                    token: token.to_owned(),
                 }
-                None => {}
-            }
+            );
+            auth_headers.insert("Authorization".to_owned(), format!("{}", auth));
         };
         let method = hyper::Method::Get;
 
@@ -66,9 +61,9 @@ impl<C: hyper::client::Connect>HealthApi for HealthApiClient<C> {
             for (key, val) in &auth_query {
                 query.append_pair(key, val);
             }
-            format!("?{}", query.finish())
+            query.finish()
         };
-        let uri_str = format!("{}/health/metrics{}", configuration.base_path, query_string);
+        let uri_str = format!("{}/health/metrics?{}", configuration.base_path, query_string);
 
         // TODO(farcaller): handle error
         // if let Err(e) = uri {
@@ -116,9 +111,9 @@ impl<C: hyper::client::Connect>HealthApi for HealthApiClient<C> {
 
         let query_string = {
             let mut query = ::url::form_urlencoded::Serializer::new(String::new());
-            format!("?{}", query.finish())
+            query.finish()
         };
-        let uri_str = format!("{}/health/status{}", configuration.base_path, query_string);
+        let uri_str = format!("{}/health/status?{}", configuration.base_path, query_string);
 
         // TODO(farcaller): handle error
         // if let Err(e) = uri {

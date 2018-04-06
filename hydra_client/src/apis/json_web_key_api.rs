@@ -51,18 +51,13 @@ impl<C: hyper::client::Connect>JsonWebKeyApi for JsonWebKeyApiClient<C> {
 
         let mut auth_headers = HashMap::<String, String>::new();
         let mut auth_query = HashMap::<String, String>::new();
-        {
-            match configuration.oauth_access_token {
-                Some(ref token) => {
-                    let auth = hyper::header::Authorization(
-                        hyper::header::Bearer {
-                            token: token.to_owned(),
-                        }
-                    );
-                    auth_headers.insert("Authorization".to_owned(), format!("{}", auth));
+        if let Some(ref token) = configuration.oauth_access_token {
+            let auth = hyper::header::Authorization(
+                hyper::header::Bearer {
+                    token: token.to_owned(),
                 }
-                None => {}
-            }
+            );
+            auth_headers.insert("Authorization".to_owned(), format!("{}", auth));
         };
         let method = hyper::Method::Post;
 
@@ -71,9 +66,9 @@ impl<C: hyper::client::Connect>JsonWebKeyApi for JsonWebKeyApiClient<C> {
             for (key, val) in &auth_query {
                 query.append_pair(key, val);
             }
-            format!("?{}", query.finish())
+            query.finish()
         };
-        let uri_str = format!("{}/keys/{set}{}", configuration.base_path, query_string, set=set);
+        let uri_str = format!("{}/keys/{set}?{}", configuration.base_path, query_string, set=set);
 
         // TODO(farcaller): handle error
         // if let Err(e) = uri {
@@ -126,18 +121,13 @@ impl<C: hyper::client::Connect>JsonWebKeyApi for JsonWebKeyApiClient<C> {
 
         let mut auth_headers = HashMap::<String, String>::new();
         let mut auth_query = HashMap::<String, String>::new();
-        {
-            match configuration.oauth_access_token {
-                Some(ref token) => {
-                    let auth = hyper::header::Authorization(
-                        hyper::header::Bearer {
-                            token: token.to_owned(),
-                        }
-                    );
-                    auth_headers.insert("Authorization".to_owned(), format!("{}", auth));
+        if let Some(ref token) = configuration.oauth_access_token {
+            let auth = hyper::header::Authorization(
+                hyper::header::Bearer {
+                    token: token.to_owned(),
                 }
-                None => {}
-            }
+            );
+            auth_headers.insert("Authorization".to_owned(), format!("{}", auth));
         };
         let method = hyper::Method::Delete;
 
@@ -146,9 +136,9 @@ impl<C: hyper::client::Connect>JsonWebKeyApi for JsonWebKeyApiClient<C> {
             for (key, val) in &auth_query {
                 query.append_pair(key, val);
             }
-            format!("?{}", query.finish())
+            query.finish()
         };
-        let uri_str = format!("{}/keys/{set}/{kid}{}", configuration.base_path, query_string, kid=kid, set=set);
+        let uri_str = format!("{}/keys/{set}/{kid}?{}", configuration.base_path, query_string, kid=kid, set=set);
 
         // TODO(farcaller): handle error
         // if let Err(e) = uri {
@@ -194,18 +184,13 @@ impl<C: hyper::client::Connect>JsonWebKeyApi for JsonWebKeyApiClient<C> {
 
         let mut auth_headers = HashMap::<String, String>::new();
         let mut auth_query = HashMap::<String, String>::new();
-        {
-            match configuration.oauth_access_token {
-                Some(ref token) => {
-                    let auth = hyper::header::Authorization(
-                        hyper::header::Bearer {
-                            token: token.to_owned(),
-                        }
-                    );
-                    auth_headers.insert("Authorization".to_owned(), format!("{}", auth));
+        if let Some(ref token) = configuration.oauth_access_token {
+            let auth = hyper::header::Authorization(
+                hyper::header::Bearer {
+                    token: token.to_owned(),
                 }
-                None => {}
-            }
+            );
+            auth_headers.insert("Authorization".to_owned(), format!("{}", auth));
         };
         let method = hyper::Method::Delete;
 
@@ -214,9 +199,9 @@ impl<C: hyper::client::Connect>JsonWebKeyApi for JsonWebKeyApiClient<C> {
             for (key, val) in &auth_query {
                 query.append_pair(key, val);
             }
-            format!("?{}", query.finish())
+            query.finish()
         };
-        let uri_str = format!("{}/keys/{set}{}", configuration.base_path, query_string, set=set);
+        let uri_str = format!("{}/keys/{set}?{}", configuration.base_path, query_string, set=set);
 
         // TODO(farcaller): handle error
         // if let Err(e) = uri {
@@ -262,18 +247,13 @@ impl<C: hyper::client::Connect>JsonWebKeyApi for JsonWebKeyApiClient<C> {
 
         let mut auth_headers = HashMap::<String, String>::new();
         let mut auth_query = HashMap::<String, String>::new();
-        {
-            match configuration.oauth_access_token {
-                Some(ref token) => {
-                    let auth = hyper::header::Authorization(
-                        hyper::header::Bearer {
-                            token: token.to_owned(),
-                        }
-                    );
-                    auth_headers.insert("Authorization".to_owned(), format!("{}", auth));
+        if let Some(ref token) = configuration.oauth_access_token {
+            let auth = hyper::header::Authorization(
+                hyper::header::Bearer {
+                    token: token.to_owned(),
                 }
-                None => {}
-            }
+            );
+            auth_headers.insert("Authorization".to_owned(), format!("{}", auth));
         };
         let method = hyper::Method::Get;
 
@@ -282,9 +262,9 @@ impl<C: hyper::client::Connect>JsonWebKeyApi for JsonWebKeyApiClient<C> {
             for (key, val) in &auth_query {
                 query.append_pair(key, val);
             }
-            format!("?{}", query.finish())
+            query.finish()
         };
-        let uri_str = format!("{}/keys/{set}/{kid}{}", configuration.base_path, query_string, kid=kid, set=set);
+        let uri_str = format!("{}/keys/{set}/{kid}?{}", configuration.base_path, query_string, kid=kid, set=set);
 
         // TODO(farcaller): handle error
         // if let Err(e) = uri {
@@ -333,18 +313,13 @@ impl<C: hyper::client::Connect>JsonWebKeyApi for JsonWebKeyApiClient<C> {
 
         let mut auth_headers = HashMap::<String, String>::new();
         let mut auth_query = HashMap::<String, String>::new();
-        {
-            match configuration.oauth_access_token {
-                Some(ref token) => {
-                    let auth = hyper::header::Authorization(
-                        hyper::header::Bearer {
-                            token: token.to_owned(),
-                        }
-                    );
-                    auth_headers.insert("Authorization".to_owned(), format!("{}", auth));
+        if let Some(ref token) = configuration.oauth_access_token {
+            let auth = hyper::header::Authorization(
+                hyper::header::Bearer {
+                    token: token.to_owned(),
                 }
-                None => {}
-            }
+            );
+            auth_headers.insert("Authorization".to_owned(), format!("{}", auth));
         };
         let method = hyper::Method::Get;
 
@@ -353,9 +328,9 @@ impl<C: hyper::client::Connect>JsonWebKeyApi for JsonWebKeyApiClient<C> {
             for (key, val) in &auth_query {
                 query.append_pair(key, val);
             }
-            format!("?{}", query.finish())
+            query.finish()
         };
-        let uri_str = format!("{}/keys/{set}{}", configuration.base_path, query_string, set=set);
+        let uri_str = format!("{}/keys/{set}?{}", configuration.base_path, query_string, set=set);
 
         // TODO(farcaller): handle error
         // if let Err(e) = uri {
@@ -404,18 +379,13 @@ impl<C: hyper::client::Connect>JsonWebKeyApi for JsonWebKeyApiClient<C> {
 
         let mut auth_headers = HashMap::<String, String>::new();
         let mut auth_query = HashMap::<String, String>::new();
-        {
-            match configuration.oauth_access_token {
-                Some(ref token) => {
-                    let auth = hyper::header::Authorization(
-                        hyper::header::Bearer {
-                            token: token.to_owned(),
-                        }
-                    );
-                    auth_headers.insert("Authorization".to_owned(), format!("{}", auth));
+        if let Some(ref token) = configuration.oauth_access_token {
+            let auth = hyper::header::Authorization(
+                hyper::header::Bearer {
+                    token: token.to_owned(),
                 }
-                None => {}
-            }
+            );
+            auth_headers.insert("Authorization".to_owned(), format!("{}", auth));
         };
         let method = hyper::Method::Put;
 
@@ -424,9 +394,9 @@ impl<C: hyper::client::Connect>JsonWebKeyApi for JsonWebKeyApiClient<C> {
             for (key, val) in &auth_query {
                 query.append_pair(key, val);
             }
-            format!("?{}", query.finish())
+            query.finish()
         };
-        let uri_str = format!("{}/keys/{set}/{kid}{}", configuration.base_path, query_string, kid=kid, set=set);
+        let uri_str = format!("{}/keys/{set}/{kid}?{}", configuration.base_path, query_string, kid=kid, set=set);
 
         // TODO(farcaller): handle error
         // if let Err(e) = uri {
@@ -479,18 +449,13 @@ impl<C: hyper::client::Connect>JsonWebKeyApi for JsonWebKeyApiClient<C> {
 
         let mut auth_headers = HashMap::<String, String>::new();
         let mut auth_query = HashMap::<String, String>::new();
-        {
-            match configuration.oauth_access_token {
-                Some(ref token) => {
-                    let auth = hyper::header::Authorization(
-                        hyper::header::Bearer {
-                            token: token.to_owned(),
-                        }
-                    );
-                    auth_headers.insert("Authorization".to_owned(), format!("{}", auth));
+        if let Some(ref token) = configuration.oauth_access_token {
+            let auth = hyper::header::Authorization(
+                hyper::header::Bearer {
+                    token: token.to_owned(),
                 }
-                None => {}
-            }
+            );
+            auth_headers.insert("Authorization".to_owned(), format!("{}", auth));
         };
         let method = hyper::Method::Put;
 
@@ -499,9 +464,9 @@ impl<C: hyper::client::Connect>JsonWebKeyApi for JsonWebKeyApiClient<C> {
             for (key, val) in &auth_query {
                 query.append_pair(key, val);
             }
-            format!("?{}", query.finish())
+            query.finish()
         };
-        let uri_str = format!("{}/keys/{set}{}", configuration.base_path, query_string, set=set);
+        let uri_str = format!("{}/keys/{set}?{}", configuration.base_path, query_string, set=set);
 
         // TODO(farcaller): handle error
         // if let Err(e) = uri {
