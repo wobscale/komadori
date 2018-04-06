@@ -17,7 +17,9 @@ r2d2 = "0.8"
 r2d2-diesel = "1.0.0"
 oauth2 = "1.1"
 rand = "0.3"
-github-rs = "0.6"
+# force 0.6.0 since 0.6.1 is a breaking change due to the ring dep bump.
+# bump this once rocket bumps ring
+github-rs = "=0.6.0"
 reqwest = "0.8"
 hydra_oauthed_client = { path = "./hydra_oauthed_client" }
 hydra_client = { path = "./hydra_client" }
