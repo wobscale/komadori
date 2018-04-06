@@ -1,0 +1,9 @@
+matrix:
+  include:
+  - language: rust
+    rust: nightly
+  - language: node_js
+    node_js:
+    - node
+    script:
+    - cd frontend && npm install && npm run build && npm test && npm run lint
