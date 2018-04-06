@@ -100,7 +100,6 @@ class CreateAccountReact extends Component {
         }
         // user got here without having a partial user, presumably this
         // is a browser history or f5 or such. Force em through the flow again.
-        alert("Redirect");
         return <Redirect to="/" />;
       case steps.creating:
         return (

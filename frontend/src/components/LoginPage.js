@@ -1,8 +1,9 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import logo from '../logo.svg';
 
-const LoginPage = (props) => (
+const LoginPage = props => (
   <div className="WobscaleAccounts">
     <header className="Wobscale-Login">
       <img src={logo} className="Wobscale-logo" alt="logo" />
@@ -21,5 +22,8 @@ const LoginPage = (props) => (
     <p> If you {"don't"} have an account yet, login to create one </p>
   </div>
 );
+LoginPage.propTypes = {
+  location: PropTypes.object.isRequired,
+};
 
 export default LoginPage;
