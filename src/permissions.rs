@@ -10,7 +10,7 @@ pub const DEV_GROUP: &str = "wobdevs";
 pub const ADMIN_GROUP: &str = "admins";
 
 fn all_groups() -> Vec<&'static str> {
-    vec![USER_GROUP, DEV_GROUP]
+    vec![USER_GROUP, DEV_GROUP, ADMIN_GROUP]
 }
 
 pub fn initialize_groups(hydra: &hydra::client::ClientBuilder) -> Result<(), String> {
