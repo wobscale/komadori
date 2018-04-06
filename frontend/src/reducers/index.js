@@ -39,12 +39,34 @@ function handleConsentState(state = {
   loaded: false,
   accepting: false,
   rejecting: false,
+  accepted: false,
+  rejected: false,
 }, action) {
   switch (action.type) {
     case a.REQUEST_CONSENT_INFO:
       return Object.assign({}, state, {
         isFetching: true,
         loaded: false,
+      });
+    case a.USER_CONSENT_FETCHED:
+      return Object.assign({}, state, {
+        isFetching: false,
+        loaded: true,
+        consent: action.data,
+      });
+    case a.USER_GIVE_CONSENT:
+      return Object.assign({}, state, {
+        isFetching: false,
+        loaded: true,
+        accepted: true,
+        rejected: false,
+      });
+    case a.USER_REJECT_CONSENT:
+      return Object.assign({}, state, {
+        isFetching: false,
+        loaded: true,
+        accepted: false,
+        rejected: true,
       });
     default:
       return state;

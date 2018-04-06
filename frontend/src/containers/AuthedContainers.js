@@ -2,7 +2,7 @@ import { connectedRouterRedirect } from 'redux-auth-wrapper/history4/redirect';
 import locationHelperBuilder from 'redux-auth-wrapper/history4/locationHelper';
 import OldLoginPage from '../components/LoginPage';
 import OldGithubLogin from './LoginWithGithubContainer';
-import OldUserConsent from '../user-consent';
+import OldUserConsent from './ConsentContainer';
 import OldCreateAccount from './CreateAccount';
 import OldUserDashboard from './UserDashboardContainer';
 

@@ -1,4 +1,5 @@
 import UserApi from '../api/user';
+import HydraAPI from '../api/hydra';
 
 export const RECEIVE_USER = 'RECEIVE_USER';
 export const RECEIVE_NO_USER = 'RECEIVE_NO_USER';
@@ -94,8 +95,9 @@ export function userConsentFetching() {
   };
 }
 
-export function userConsentFetched() {
+export function userConsentFetched(consent) {
   return {
+    data: consent,
     type: USER_CONSENT_FETCHED,
   };
 }
@@ -106,9 +108,27 @@ export function userGiveConsent() {
   };
 }
 
-export function userGotConsent() {
+export function userRejectedConsent() {
   return {
-    type: USER_GOT_CONSENT,
+    type: USER_REJECT_CONSENT,
+  };
+}
+
+export function doGiveConsent(id, scopes) {
+  return (dispatch) => {
+    HydraAPI.acceptConsent(id, scopes)
+      .then(() => {
+        dispatch(userGiveConsent());
+      });
+  };
+}
+
+export function doRejectConsent(id, reason) {
+  return (dispatch) => {
+    HydraAPI.rejectConsent(id, reason)
+      .then(() => {
+        dispatch(userRejectedConsent());
+      });
   };
 }
 
@@ -140,3 +160,16 @@ export function doCreateAccount(userInfo) {
       });
   };
 }
+
+export function doGetConsentInfo(id) {
+  return (dispatch) => {
+    HydraAPI.getConsent(id)
+      .then((consent) => {
+        dispatch(userConsentFetched(consent));
+      })
+      .catch((e) => {
+        console.error(e);
+      });
+  };
+}
+
