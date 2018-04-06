@@ -1,7 +1,9 @@
 import { combineReducers } from 'redux';
 import * as a from '../actions';
 
-function handleUserState(state = { isFetching: false, loaded: false, loggedIn: false }, action) {
+const defaultUserState = { isFetching: false, loaded: false, loggedIn: false };
+
+function handleUserState(state = defaultUserState, action) {
   switch (action.type) {
     case a.RECEIVE_USER:
       return Object.assign({}, state, {
@@ -18,6 +20,9 @@ function handleUserState(state = { isFetching: false, loaded: false, loggedIn: f
         loaded: true,
         loggedIn: false,
       });
+    case a.ADMIN_BOOTSTRAPPED:
+      // Force a refetch since they're now an admin
+      return defaultUserState;
     default:
       return state;
   }

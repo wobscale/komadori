@@ -1,5 +1,6 @@
 import UserApi from '../api/user';
 import HydraAPI from '../api/hydra';
+import AdminAPI from '../api/admin';
 
 export const RECEIVE_USER = 'RECEIVE_USER';
 export const RECEIVE_NO_USER = 'RECEIVE_NO_USER';
@@ -173,3 +174,22 @@ export function doGetConsentInfo(id) {
   };
 }
 
+export const ADMIN_BOOTSTRAPPED = 'ADMIN_BOOTSTRAPPED';
+export function adminBootstrapped() {
+  return {
+    type: ADMIN_BOOTSTRAPPED,
+  };
+}
+
+export function doBootstrapAdmin(token) {
+  return (dispatch) => {
+    AdminAPI.bootstrap(token)
+      .then(() => {
+        dispatch(adminBootstrapped());
+      })
+      .catch((e) => {
+        // TODO
+        console.error(e);
+      });
+  };
+}

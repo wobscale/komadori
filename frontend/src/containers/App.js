@@ -11,6 +11,7 @@ import GithubOauthWindow from '../github-oauth-window';
 import {
   Login, CreateAccount, GithubLogin,
   UserDashboard, UserConsent,
+  BootstrapAdmin,
 } from './AuthedContainers';
 
 class ReactApp extends Component {
@@ -60,6 +61,10 @@ class ReactApp extends Component {
           <Route
             path="/user/consent"
             component={UserConsent}
+          />
+          <Route
+            path="/admin/bootstrap"
+            component={BootstrapAdmin}
           />
         </Switch>
       </div>
