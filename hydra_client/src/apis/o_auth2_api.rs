@@ -59,18 +59,13 @@ impl<C: hyper::client::Connect>OAuth2Api for OAuth2ApiClient<C> {
 
         let mut auth_headers = HashMap::<String, String>::new();
         let mut auth_query = HashMap::<String, String>::new();
-        {
-            match configuration.oauth_access_token {
-                Some(ref token) => {
-                    let auth = hyper::header::Authorization(
-                        hyper::header::Bearer {
-                            token: token.to_owned(),
-                        }
-                    );
-                    auth_headers.insert("Authorization".to_owned(), format!("{}", auth));
+        if let Some(ref token) = configuration.oauth_access_token {
+            let auth = hyper::header::Authorization(
+                hyper::header::Bearer {
+                    token: token.to_owned(),
                 }
-                None => {}
-            }
+            );
+            auth_headers.insert("Authorization".to_owned(), format!("{}", auth));
         };
         let method = hyper::Method::Patch;
 
@@ -79,9 +74,9 @@ impl<C: hyper::client::Connect>OAuth2Api for OAuth2ApiClient<C> {
             for (key, val) in &auth_query {
                 query.append_pair(key, val);
             }
-            format!("?{}", query.finish())
+            query.finish()
         };
-        let uri_str = format!("{}/oauth2/consent/requests/{id}/accept{}", configuration.base_path, query_string, id=id);
+        let uri_str = format!("{}/oauth2/consent/requests/{id}/accept?{}", configuration.base_path, query_string, id=id);
 
         // TODO(farcaller): handle error
         // if let Err(e) = uri {
@@ -131,18 +126,13 @@ impl<C: hyper::client::Connect>OAuth2Api for OAuth2ApiClient<C> {
 
         let mut auth_headers = HashMap::<String, String>::new();
         let mut auth_query = HashMap::<String, String>::new();
-        {
-            match configuration.oauth_access_token {
-                Some(ref token) => {
-                    let auth = hyper::header::Authorization(
-                        hyper::header::Bearer {
-                            token: token.to_owned(),
-                        }
-                    );
-                    auth_headers.insert("Authorization".to_owned(), format!("{}", auth));
+        if let Some(ref token) = configuration.oauth_access_token {
+            let auth = hyper::header::Authorization(
+                hyper::header::Bearer {
+                    token: token.to_owned(),
                 }
-                None => {}
-            }
+            );
+            auth_headers.insert("Authorization".to_owned(), format!("{}", auth));
         };
         let method = hyper::Method::Post;
 
@@ -151,9 +141,9 @@ impl<C: hyper::client::Connect>OAuth2Api for OAuth2ApiClient<C> {
             for (key, val) in &auth_query {
                 query.append_pair(key, val);
             }
-            format!("?{}", query.finish())
+            query.finish()
         };
-        let uri_str = format!("{}/clients{}", configuration.base_path, query_string);
+        let uri_str = format!("{}/clients?{}", configuration.base_path, query_string);
 
         // TODO(farcaller): handle error
         // if let Err(e) = uri {
@@ -206,18 +196,13 @@ impl<C: hyper::client::Connect>OAuth2Api for OAuth2ApiClient<C> {
 
         let mut auth_headers = HashMap::<String, String>::new();
         let mut auth_query = HashMap::<String, String>::new();
-        {
-            match configuration.oauth_access_token {
-                Some(ref token) => {
-                    let auth = hyper::header::Authorization(
-                        hyper::header::Bearer {
-                            token: token.to_owned(),
-                        }
-                    );
-                    auth_headers.insert("Authorization".to_owned(), format!("{}", auth));
+        if let Some(ref token) = configuration.oauth_access_token {
+            let auth = hyper::header::Authorization(
+                hyper::header::Bearer {
+                    token: token.to_owned(),
                 }
-                None => {}
-            }
+            );
+            auth_headers.insert("Authorization".to_owned(), format!("{}", auth));
         };
         let method = hyper::Method::Delete;
 
@@ -226,9 +211,9 @@ impl<C: hyper::client::Connect>OAuth2Api for OAuth2ApiClient<C> {
             for (key, val) in &auth_query {
                 query.append_pair(key, val);
             }
-            format!("?{}", query.finish())
+            query.finish()
         };
-        let uri_str = format!("{}/clients/{id}{}", configuration.base_path, query_string, id=id);
+        let uri_str = format!("{}/clients/{id}?{}", configuration.base_path, query_string, id=id);
 
         // TODO(farcaller): handle error
         // if let Err(e) = uri {
@@ -274,18 +259,13 @@ impl<C: hyper::client::Connect>OAuth2Api for OAuth2ApiClient<C> {
 
         let mut auth_headers = HashMap::<String, String>::new();
         let mut auth_query = HashMap::<String, String>::new();
-        {
-            match configuration.oauth_access_token {
-                Some(ref token) => {
-                    let auth = hyper::header::Authorization(
-                        hyper::header::Bearer {
-                            token: token.to_owned(),
-                        }
-                    );
-                    auth_headers.insert("Authorization".to_owned(), format!("{}", auth));
+        if let Some(ref token) = configuration.oauth_access_token {
+            let auth = hyper::header::Authorization(
+                hyper::header::Bearer {
+                    token: token.to_owned(),
                 }
-                None => {}
-            }
+            );
+            auth_headers.insert("Authorization".to_owned(), format!("{}", auth));
         };
         let method = hyper::Method::Get;
 
@@ -294,9 +274,9 @@ impl<C: hyper::client::Connect>OAuth2Api for OAuth2ApiClient<C> {
             for (key, val) in &auth_query {
                 query.append_pair(key, val);
             }
-            format!("?{}", query.finish())
+            query.finish()
         };
-        let uri_str = format!("{}/clients/{id}{}", configuration.base_path, query_string, id=id);
+        let uri_str = format!("{}/clients/{id}?{}", configuration.base_path, query_string, id=id);
 
         // TODO(farcaller): handle error
         // if let Err(e) = uri {
@@ -345,18 +325,13 @@ impl<C: hyper::client::Connect>OAuth2Api for OAuth2ApiClient<C> {
 
         let mut auth_headers = HashMap::<String, String>::new();
         let mut auth_query = HashMap::<String, String>::new();
-        {
-            match configuration.oauth_access_token {
-                Some(ref token) => {
-                    let auth = hyper::header::Authorization(
-                        hyper::header::Bearer {
-                            token: token.to_owned(),
-                        }
-                    );
-                    auth_headers.insert("Authorization".to_owned(), format!("{}", auth));
+        if let Some(ref token) = configuration.oauth_access_token {
+            let auth = hyper::header::Authorization(
+                hyper::header::Bearer {
+                    token: token.to_owned(),
                 }
-                None => {}
-            }
+            );
+            auth_headers.insert("Authorization".to_owned(), format!("{}", auth));
         };
         let method = hyper::Method::Get;
 
@@ -365,9 +340,9 @@ impl<C: hyper::client::Connect>OAuth2Api for OAuth2ApiClient<C> {
             for (key, val) in &auth_query {
                 query.append_pair(key, val);
             }
-            format!("?{}", query.finish())
+            query.finish()
         };
-        let uri_str = format!("{}/oauth2/consent/requests/{id}{}", configuration.base_path, query_string, id=id);
+        let uri_str = format!("{}/oauth2/consent/requests/{id}?{}", configuration.base_path, query_string, id=id);
 
         // TODO(farcaller): handle error
         // if let Err(e) = uri {
@@ -418,9 +393,9 @@ impl<C: hyper::client::Connect>OAuth2Api for OAuth2ApiClient<C> {
 
         let query_string = {
             let mut query = ::url::form_urlencoded::Serializer::new(String::new());
-            format!("?{}", query.finish())
+            query.finish()
         };
-        let uri_str = format!("{}/.well-known/openid-configuration{}", configuration.base_path, query_string);
+        let uri_str = format!("{}/.well-known/openid-configuration?{}", configuration.base_path, query_string);
 
         // TODO(farcaller): handle error
         // if let Err(e) = uri {
@@ -466,32 +441,22 @@ impl<C: hyper::client::Connect>OAuth2Api for OAuth2ApiClient<C> {
 
         let mut auth_headers = HashMap::<String, String>::new();
         let mut auth_query = HashMap::<String, String>::new();
-        {
-            match configuration.basic_auth {
-                Some(ref auth_conf) => {
-                    let auth = hyper::header::Authorization(
-                        hyper::header::Basic {
-                            username: auth_conf.0.to_owned(),
-                            password: auth_conf.1.to_owned(),
-                        }
-                    );
-                    auth_headers.insert("Authorization".to_owned(), format!("{}", auth));
+        if let Some(ref auth_conf) = configuration.basic_auth {
+            let auth = hyper::header::Authorization(
+                hyper::header::Basic {
+                    username: auth_conf.0.to_owned(),
+                    password: auth_conf.1.to_owned(),
                 }
-                None => {}
-            }
+            );
+            auth_headers.insert("Authorization".to_owned(), auth.to_string());
         };
-        {
-            match configuration.oauth_access_token {
-                Some(ref token) => {
-                    let auth = hyper::header::Authorization(
-                        hyper::header::Bearer {
-                            token: token.to_owned(),
-                        }
-                    );
-                    auth_headers.insert("Authorization".to_owned(), format!("{}", auth));
+        if let Some(ref token) = configuration.oauth_access_token {
+            let auth = hyper::header::Authorization(
+                hyper::header::Bearer {
+                    token: token.to_owned(),
                 }
-                None => {}
-            }
+            );
+            auth_headers.insert("Authorization".to_owned(), format!("{}", auth));
         };
         let method = hyper::Method::Post;
 
@@ -500,9 +465,9 @@ impl<C: hyper::client::Connect>OAuth2Api for OAuth2ApiClient<C> {
             for (key, val) in &auth_query {
                 query.append_pair(key, val);
             }
-            format!("?{}", query.finish())
+            query.finish()
         };
-        let uri_str = format!("{}/oauth2/introspect{}", configuration.base_path, query_string);
+        let uri_str = format!("{}/oauth2/introspect?{}", configuration.base_path, query_string);
 
         // TODO(farcaller): handle error
         // if let Err(e) = uri {
@@ -551,18 +516,13 @@ impl<C: hyper::client::Connect>OAuth2Api for OAuth2ApiClient<C> {
 
         let mut auth_headers = HashMap::<String, String>::new();
         let mut auth_query = HashMap::<String, String>::new();
-        {
-            match configuration.oauth_access_token {
-                Some(ref token) => {
-                    let auth = hyper::header::Authorization(
-                        hyper::header::Bearer {
-                            token: token.to_owned(),
-                        }
-                    );
-                    auth_headers.insert("Authorization".to_owned(), format!("{}", auth));
+        if let Some(ref token) = configuration.oauth_access_token {
+            let auth = hyper::header::Authorization(
+                hyper::header::Bearer {
+                    token: token.to_owned(),
                 }
-                None => {}
-            }
+            );
+            auth_headers.insert("Authorization".to_owned(), format!("{}", auth));
         };
         let method = hyper::Method::Get;
 
@@ -571,9 +531,9 @@ impl<C: hyper::client::Connect>OAuth2Api for OAuth2ApiClient<C> {
             for (key, val) in &auth_query {
                 query.append_pair(key, val);
             }
-            format!("?{}", query.finish())
+            query.finish()
         };
-        let uri_str = format!("{}/clients{}", configuration.base_path, query_string);
+        let uri_str = format!("{}/clients?{}", configuration.base_path, query_string);
 
         // TODO(farcaller): handle error
         // if let Err(e) = uri {
@@ -624,9 +584,9 @@ impl<C: hyper::client::Connect>OAuth2Api for OAuth2ApiClient<C> {
 
         let query_string = {
             let mut query = ::url::form_urlencoded::Serializer::new(String::new());
-            format!("?{}", query.finish())
+            query.finish()
         };
-        let uri_str = format!("{}/oauth2/auth{}", configuration.base_path, query_string);
+        let uri_str = format!("{}/oauth2/auth?{}", configuration.base_path, query_string);
 
         // TODO(farcaller): handle error
         // if let Err(e) = uri {
@@ -669,32 +629,22 @@ impl<C: hyper::client::Connect>OAuth2Api for OAuth2ApiClient<C> {
 
         let mut auth_headers = HashMap::<String, String>::new();
         let mut auth_query = HashMap::<String, String>::new();
-        {
-            match configuration.basic_auth {
-                Some(ref auth_conf) => {
-                    let auth = hyper::header::Authorization(
-                        hyper::header::Basic {
-                            username: auth_conf.0.to_owned(),
-                            password: auth_conf.1.to_owned(),
-                        }
-                    );
-                    auth_headers.insert("Authorization".to_owned(), format!("{}", auth));
+        if let Some(ref auth_conf) = configuration.basic_auth {
+            let auth = hyper::header::Authorization(
+                hyper::header::Basic {
+                    username: auth_conf.0.to_owned(),
+                    password: auth_conf.1.to_owned(),
                 }
-                None => {}
-            }
+            );
+            auth_headers.insert("Authorization".to_owned(), auth.to_string());
         };
-        {
-            match configuration.oauth_access_token {
-                Some(ref token) => {
-                    let auth = hyper::header::Authorization(
-                        hyper::header::Bearer {
-                            token: token.to_owned(),
-                        }
-                    );
-                    auth_headers.insert("Authorization".to_owned(), format!("{}", auth));
+        if let Some(ref token) = configuration.oauth_access_token {
+            let auth = hyper::header::Authorization(
+                hyper::header::Bearer {
+                    token: token.to_owned(),
                 }
-                None => {}
-            }
+            );
+            auth_headers.insert("Authorization".to_owned(), format!("{}", auth));
         };
         let method = hyper::Method::Post;
 
@@ -703,9 +653,9 @@ impl<C: hyper::client::Connect>OAuth2Api for OAuth2ApiClient<C> {
             for (key, val) in &auth_query {
                 query.append_pair(key, val);
             }
-            format!("?{}", query.finish())
+            query.finish()
         };
-        let uri_str = format!("{}/oauth2/token{}", configuration.base_path, query_string);
+        let uri_str = format!("{}/oauth2/token?{}", configuration.base_path, query_string);
 
         // TODO(farcaller): handle error
         // if let Err(e) = uri {
@@ -754,18 +704,13 @@ impl<C: hyper::client::Connect>OAuth2Api for OAuth2ApiClient<C> {
 
         let mut auth_headers = HashMap::<String, String>::new();
         let mut auth_query = HashMap::<String, String>::new();
-        {
-            match configuration.oauth_access_token {
-                Some(ref token) => {
-                    let auth = hyper::header::Authorization(
-                        hyper::header::Bearer {
-                            token: token.to_owned(),
-                        }
-                    );
-                    auth_headers.insert("Authorization".to_owned(), format!("{}", auth));
+        if let Some(ref token) = configuration.oauth_access_token {
+            let auth = hyper::header::Authorization(
+                hyper::header::Bearer {
+                    token: token.to_owned(),
                 }
-                None => {}
-            }
+            );
+            auth_headers.insert("Authorization".to_owned(), format!("{}", auth));
         };
         let method = hyper::Method::Patch;
 
@@ -774,9 +719,9 @@ impl<C: hyper::client::Connect>OAuth2Api for OAuth2ApiClient<C> {
             for (key, val) in &auth_query {
                 query.append_pair(key, val);
             }
-            format!("?{}", query.finish())
+            query.finish()
         };
-        let uri_str = format!("{}/oauth2/consent/requests/{id}/reject{}", configuration.base_path, query_string, id=id);
+        let uri_str = format!("{}/oauth2/consent/requests/{id}/reject?{}", configuration.base_path, query_string, id=id);
 
         // TODO(farcaller): handle error
         // if let Err(e) = uri {
@@ -826,19 +771,14 @@ impl<C: hyper::client::Connect>OAuth2Api for OAuth2ApiClient<C> {
 
         let mut auth_headers = HashMap::<String, String>::new();
         let mut auth_query = HashMap::<String, String>::new();
-        {
-            match configuration.basic_auth {
-                Some(ref auth_conf) => {
-                    let auth = hyper::header::Authorization(
-                        hyper::header::Basic {
-                            username: auth_conf.0.to_owned(),
-                            password: auth_conf.1.to_owned(),
-                        }
-                    );
-                    auth_headers.insert("Authorization".to_owned(), format!("{}", auth));
+        if let Some(ref auth_conf) = configuration.basic_auth {
+            let auth = hyper::header::Authorization(
+                hyper::header::Basic {
+                    username: auth_conf.0.to_owned(),
+                    password: auth_conf.1.to_owned(),
                 }
-                None => {}
-            }
+            );
+            auth_headers.insert("Authorization".to_owned(), auth.to_string());
         };
         let method = hyper::Method::Post;
 
@@ -847,9 +787,9 @@ impl<C: hyper::client::Connect>OAuth2Api for OAuth2ApiClient<C> {
             for (key, val) in &auth_query {
                 query.append_pair(key, val);
             }
-            format!("?{}", query.finish())
+            query.finish()
         };
-        let uri_str = format!("{}/oauth2/revoke{}", configuration.base_path, query_string);
+        let uri_str = format!("{}/oauth2/revoke?{}", configuration.base_path, query_string);
 
         // TODO(farcaller): handle error
         // if let Err(e) = uri {
@@ -895,18 +835,13 @@ impl<C: hyper::client::Connect>OAuth2Api for OAuth2ApiClient<C> {
 
         let mut auth_headers = HashMap::<String, String>::new();
         let mut auth_query = HashMap::<String, String>::new();
-        {
-            match configuration.oauth_access_token {
-                Some(ref token) => {
-                    let auth = hyper::header::Authorization(
-                        hyper::header::Bearer {
-                            token: token.to_owned(),
-                        }
-                    );
-                    auth_headers.insert("Authorization".to_owned(), format!("{}", auth));
+        if let Some(ref token) = configuration.oauth_access_token {
+            let auth = hyper::header::Authorization(
+                hyper::header::Bearer {
+                    token: token.to_owned(),
                 }
-                None => {}
-            }
+            );
+            auth_headers.insert("Authorization".to_owned(), format!("{}", auth));
         };
         let method = hyper::Method::Put;
 
@@ -915,9 +850,9 @@ impl<C: hyper::client::Connect>OAuth2Api for OAuth2ApiClient<C> {
             for (key, val) in &auth_query {
                 query.append_pair(key, val);
             }
-            format!("?{}", query.finish())
+            query.finish()
         };
-        let uri_str = format!("{}/clients/{id}{}", configuration.base_path, query_string, id=id);
+        let uri_str = format!("{}/clients/{id}?{}", configuration.base_path, query_string, id=id);
 
         // TODO(farcaller): handle error
         // if let Err(e) = uri {
@@ -970,18 +905,13 @@ impl<C: hyper::client::Connect>OAuth2Api for OAuth2ApiClient<C> {
 
         let mut auth_headers = HashMap::<String, String>::new();
         let mut auth_query = HashMap::<String, String>::new();
-        {
-            match configuration.oauth_access_token {
-                Some(ref token) => {
-                    let auth = hyper::header::Authorization(
-                        hyper::header::Bearer {
-                            token: token.to_owned(),
-                        }
-                    );
-                    auth_headers.insert("Authorization".to_owned(), format!("{}", auth));
+        if let Some(ref token) = configuration.oauth_access_token {
+            let auth = hyper::header::Authorization(
+                hyper::header::Bearer {
+                    token: token.to_owned(),
                 }
-                None => {}
-            }
+            );
+            auth_headers.insert("Authorization".to_owned(), format!("{}", auth));
         };
         let method = hyper::Method::Post;
 
@@ -990,9 +920,9 @@ impl<C: hyper::client::Connect>OAuth2Api for OAuth2ApiClient<C> {
             for (key, val) in &auth_query {
                 query.append_pair(key, val);
             }
-            format!("?{}", query.finish())
+            query.finish()
         };
-        let uri_str = format!("{}/userinfo{}", configuration.base_path, query_string);
+        let uri_str = format!("{}/userinfo?{}", configuration.base_path, query_string);
 
         // TODO(farcaller): handle error
         // if let Err(e) = uri {
@@ -1041,18 +971,13 @@ impl<C: hyper::client::Connect>OAuth2Api for OAuth2ApiClient<C> {
 
         let mut auth_headers = HashMap::<String, String>::new();
         let mut auth_query = HashMap::<String, String>::new();
-        {
-            match configuration.oauth_access_token {
-                Some(ref token) => {
-                    let auth = hyper::header::Authorization(
-                        hyper::header::Bearer {
-                            token: token.to_owned(),
-                        }
-                    );
-                    auth_headers.insert("Authorization".to_owned(), format!("{}", auth));
+        if let Some(ref token) = configuration.oauth_access_token {
+            let auth = hyper::header::Authorization(
+                hyper::header::Bearer {
+                    token: token.to_owned(),
                 }
-                None => {}
-            }
+            );
+            auth_headers.insert("Authorization".to_owned(), format!("{}", auth));
         };
         let method = hyper::Method::Get;
 
@@ -1061,9 +986,9 @@ impl<C: hyper::client::Connect>OAuth2Api for OAuth2ApiClient<C> {
             for (key, val) in &auth_query {
                 query.append_pair(key, val);
             }
-            format!("?{}", query.finish())
+            query.finish()
         };
-        let uri_str = format!("{}/.well-known/jwks.json{}", configuration.base_path, query_string);
+        let uri_str = format!("{}/.well-known/jwks.json?{}", configuration.base_path, query_string);
 
         // TODO(farcaller): handle error
         // if let Err(e) = uri {
