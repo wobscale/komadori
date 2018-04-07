@@ -2,7 +2,6 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 const steps = {
-  default: 'default',
   loggedIn: 'loggedIn',
   askConsent: 'askConsent',
   accept: 'accept',
@@ -14,13 +13,6 @@ export { steps as ConsentSteps };
 
 const UserConsent = (props) => {
   switch (props.step) {
-    case steps.default:
-      return (
-        <div>
-          <h2>Authenticate with your Wobscale Account</h2>
-          <p> Hang tight, we&#39;re checking if you&#39;re logged in. </p>
-        </div>
-      );
     case steps.loggedIn:
       props.getConsentInfo(props.consent.id);
       return (
