@@ -49,7 +49,8 @@ const userIsNotPartial = connectedRouterRedirect({
 
 const userIsNotAdmin = connectedRouterRedirect({
   redirectPath: '/',
-  authenticatedSelector: state => !(state.user && state.user.loggedIn && state.user.user && state.user.user.groups.includes('admin')),
+  allowRedirectBack: false,
+  authenticatedSelector: state => !(state.user && state.user.loggedIn && state.user.user && state.user.user.groups.includes('admins')),
   wrapperDisplayName: 'UserIsNotAdmin',
 });
 
