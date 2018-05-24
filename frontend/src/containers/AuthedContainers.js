@@ -2,9 +2,10 @@ import { connectedRouterRedirect } from 'redux-auth-wrapper/history4/redirect';
 import locationHelperBuilder from 'redux-auth-wrapper/history4/locationHelper';
 import OldLoginPage from '../components/LoginPage';
 import OldGithubLogin from './LoginWithGithubContainer';
-import OldUserConsent from '../user-consent';
+import OldUserConsent from './ConsentContainer';
 import OldCreateAccount from './CreateAccount';
 import OldUserDashboard from './UserDashboardContainer';
+import OldBootstrapAdmin from './AdminBootstrapContainer';
 
 const userIsAuthenticated = connectedRouterRedirect({
   redirectPath: '/',
@@ -46,6 +47,13 @@ const userIsNotPartial = connectedRouterRedirect({
   wrapperDisplayName: 'UserIsPartial',
 });
 
+const userIsNotAdmin = connectedRouterRedirect({
+  redirectPath: '/',
+  allowRedirectBack: false,
+  authenticatedSelector: state => !(state.user && state.user.loggedIn && state.user.user && state.user.user.groups.includes('admins')),
+  wrapperDisplayName: 'UserIsNotAdmin',
+});
+
 export const Login = userIsNotAuthenticated(OldLoginPage);
 export const CreateAccount = userIsNotAuthenticated(OldCreateAccount);
 
@@ -53,3 +61,4 @@ export const GithubLogin = userIsNotAuthenticated(userIsNotPartial(OldGithubLogi
 
 export const UserDashboard = userIsAuthenticated(OldUserDashboard);
 export const UserConsent = userIsAuthenticated(OldUserConsent);
+export const BootstrapAdmin = userIsAuthenticated(userIsNotAdmin(OldBootstrapAdmin));
