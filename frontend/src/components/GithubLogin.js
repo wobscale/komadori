@@ -47,6 +47,10 @@ class GithubLogin extends Component {
         }
         window.clearInterval(waitClosed);
         if (window.github_response) {
+          if (window.github_response.error) {
+            reject(new Error(window.github_response.error));
+            return;
+          }
           resolve(window.github_response);
         } else {
           reject(new Error('did not get github_response'));
@@ -54,6 +58,11 @@ class GithubLogin extends Component {
       }, 200);
     }).then((resp) => {
       this.props.onAuth(resp);
+    }).catch((err) => {
+      this.setState({
+        step: steps.error,
+        err,
+      });
     });
   }
 
@@ -75,7 +84,7 @@ class GithubLogin extends Component {
       return (
         <div>
           <h2>An error occured</h2>
-          <div className="error"> {this.state.err} </div>
+          <div className="error"> {this.state.err.message} </div>
           <button onClick={() => { this.setState({ step: steps.loggingIn }); }}>
             Retry
           </button>

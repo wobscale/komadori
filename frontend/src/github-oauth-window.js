@@ -12,6 +12,17 @@ class GithubOauthWindow extends Component {
   }
   componentDidMount() {
     const q = qs.parse(this.props.location.search);
+    if (q.error) {
+      let error = `Error: ${q.error}`;
+      if (q.error_description) {
+        error = `${error}: ${q.error_description}`;
+      }
+      window.opener.github_response = {
+        error,
+      };
+      window.close();
+    }
+
     if (q.code) {
       window.opener.github_response = {
         error: null,
