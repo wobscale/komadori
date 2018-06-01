@@ -1,0 +1,53 @@
+# Please note, this docker-compose file is meant
+# *ONLY* for development purposes and is not a good basis for a production
+# deployment.
+
+version: '3'
+
+networks:
+  default: {}
+  internal:
+    internal: true
+services:
+  frontend:
+    image: node:9
+    ports:
+    - 3000:3000
+    volumes:
+    - "./frontend:/app/frontend"
+    working_dir: /app/frontend
+    command: npm start
+    networks:
+    - default
+  komadori:
+    restart: always
+    ports:
+    - 8000:8000
+    env_file:
+    - ./hack/compose/komadori_env
+    - ./hack/compose/komadori_secrets
+    build: 
+      context: .
+      dockerfile: ./Dockerfile.dev
+    networks:
+    - default
+    - internal
+  db:
+    image: postgres
+    env_file: ./hack/compose/db_env
+    volumes:
+    - "./hack/compose/db-init.sh:/docker-entrypoint-initdb.d/db-init.sh"
+    networks:
+    - internal
+  hydra:
+    image: oryd/hydra:v0.11.12-alpine
+    ports:
+    - 4444:4444
+    env_file: ./hack/compose/hydra_env
+    entrypoint: /hack/compose/hydra-init.sh
+    command: host --dangerous-force-http
+    volumes:
+    - "./hack:/hack"
+    networks:
+    - default
+    - internal
