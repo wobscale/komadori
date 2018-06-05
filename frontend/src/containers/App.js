@@ -7,7 +7,7 @@ import {
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { doGetUser } from '../actions';
-import GithubOauthWindow from '../github-oauth-window';
+import GithubOauthWindow from './GithubOauthWindow';
 import {
   Login, CreateAccount, GithubLogin,
   UserDashboard, UserConsent,

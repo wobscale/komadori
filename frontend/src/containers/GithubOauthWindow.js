@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import qs from 'query-string';
 import PropTypes from 'prop-types';
-import config from './config';
+import config from '../config';
 
 class GithubOauthWindow extends Component {
   constructor(props) {
