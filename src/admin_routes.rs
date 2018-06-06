@@ -51,7 +51,7 @@ pub fn bootstrap_admin(
     let client = hydra.build(&(handle.into()));
     let uuidstr = user.uuid.simple().to_string();
     Future(Box::new(client.client().warden_api().add_members_to_group(permissions::ADMIN_GROUP, hydra_client::models::GroupMembers::new().with_members(vec![uuidstr]))
-        .map(|o| Json(()))
+        .map(|_| Json(()))
         .map_err(|e| {
             Json(Error::server_error(format!("error: {:?}", e)))
         })))

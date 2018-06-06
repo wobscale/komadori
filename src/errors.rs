@@ -17,18 +17,11 @@ impl Error {
             message: message,
         }
     }
-
     pub fn client_error(message: String) -> Self {
-        Self {
-            status: Status::BadRequest,
-            message: message,
-        }
+        Self::new(Status::BadRequest, message)
     }
     pub fn server_error(message: String) -> Self {
-        Self {
-            status: Status::InternalServerError,
-            message: message,
-        }
+        Self::new(Status::InternalServerError, message)
     }
 }
 

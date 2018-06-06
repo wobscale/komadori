@@ -299,7 +299,8 @@ pub struct GithubLoginRequest {
 #[derive(Deserialize)]
 #[serde(tag = "provider")]
 pub enum AuthUserRequest {
-    github(GithubLoginRequest),
+    #[serde(rename = "github")]
+    Github(GithubLoginRequest),
 }
 
 #[derive(Serialize)]
@@ -319,7 +320,7 @@ pub fn auth_user(
     mut cookies: Cookies,
 ) -> Json<Result<AuthUserResp, Error>> {
     match req.0 {
-        AuthUserRequest::github(g) => {
+        AuthUserRequest::Github(g) => {
             // We got github oauth tokens, exchange it for an access code
             let token = match github_oauth.config().exchange_code(g.code.clone()) {
                 Ok(t) => t,
@@ -374,7 +375,7 @@ pub fn auth_user(
             };
 
             // Now either this github account id could have an associated user, or not. If it does,
-            // return it, if not,
+            // return it, if not, assume this is a partial user.
             match User::from_partial_user(&conn, &pu) {
                 Ok(u) => {
                     cookies.add_private(Cookie::new(
@@ -391,6 +392,7 @@ pub fn auth_user(
                     Json(Ok(AuthUserResp::UserResp(ru)))
                 }
                 Err(e) => {
+                    debug!("error getting user from partial user; assuming user doesn't exist: {:?}", e);
                     // TODO: better error handling for client vs server errs
                     Json(Ok(AuthUserResp::PartialUser(pu)))
                 }
@@ -469,7 +471,7 @@ pub fn create_user(
             _ => {}
         };
 
-        Ok((newuser))
+        Ok(newuser)
     });
     match create_res {
         Err(e) => {

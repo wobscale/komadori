@@ -1,6 +1,5 @@
 use hydra;
 use hydra_client;
-use hydra_client::apis::WardenApi;
 use futures;
 use tokio_core;
 use futures::future::Future;

@@ -31,7 +31,6 @@ extern crate serde_derive;
 extern crate serde_json;
 
 mod request_id;
-mod util;
 mod hydra;
 mod schema;
 mod models;
