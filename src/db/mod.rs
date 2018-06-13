@@ -1,3 +1,5 @@
+pub mod users;
+
 use diesel::PgConnection;
 use r2d2;
 use r2d2_diesel::ConnectionManager;

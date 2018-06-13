@@ -132,7 +132,6 @@ fn main() {
             &env::var("HYDRA_CLIENT_SECRET").expect("Must set HYDRA_CLIENT_SECRET"),
         )
     };
-    permissions::initialize_groups(&hydra_builder).unwrap();
 
     let github_oauth_config = {
         let client_id = env::var("GITHUB_CLIENT_ID").expect("GITHUB_CLIENT_ID must be set");
@@ -148,6 +147,8 @@ fn main() {
             (timer.elapsed().as_secs() as f64 + timer.elapsed().subsec_nanos() as f64 * 1e-9)
         );
     }
+
+    permissions::initialize_groups(&pool.get().unwrap()).unwrap();
 
     rkt
         .attach(request_id::RequestIDFairing)

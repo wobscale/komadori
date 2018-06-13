@@ -22,7 +22,7 @@ class UserDashboard extends Component {
         <p> {"You're"} in the following groups: </p>
         <ul>
           {
-            this.state.user.groups.map(group => (<li key={group}>{group}</li>))
+            this.state.user.groups.map(group => (<li key={group.uuid}>{group.name}</li>))
           }
         </ul>
       </div>
