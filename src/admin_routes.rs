@@ -1,16 +1,11 @@
 use constant_time_eq;
-use hydra_client;
-use multi_reactor_drifting::{Handle, Future};
-use futures;
-use futures::Future as PastPerfect;
 use rand::Rng;
 use rand;
-use rocket::State;
+use db;
 use rocket;
 use rocket_contrib::json::Json;
 
 use errors::Error;
-use hydra;
 use permissions;
 use user_routes::User;
 
@@ -40,19 +35,17 @@ pub struct BootstrapAdminReq {
 // TODO: conceivably this should be only usable if the admin group is empty
 #[post("/admin/bootstrap", format = "application/json", data = "<req>")]
 pub fn bootstrap_admin(
+    conn: db::Conn,
     user: User,
-    hydra: State<hydra::client::ClientBuilder>,
-    handle: Handle,
     req: Json<BootstrapAdminReq>,
-) -> Future<Json<()>, Json<Error>> {
+) -> Result<Json<()>, Json<Error>> {
     if !constant_time_eq::constant_time_eq(req.token.as_bytes(), (*BOOTSTRAP_TOKEN).as_bytes()) {
-        return Future(Box::new(futures::future::err(Json(Error::client_error("invalid bootstrap token".to_string())))));
+        return Err(Json(Error::client_error("invalid bootstrap token".to_string())));
     }
-    let client = hydra.build(&(handle.into()));
-    let uuidstr = user.uuid.simple().to_string();
-    Future(Box::new(client.client().warden_api().add_members_to_group(permissions::ADMIN_GROUP, hydra_client::models::GroupMembers::new().with_members(vec![uuidstr]))
-        .map(|_| Json(()))
+
+    user.add_group(conn, permissions::admin_group().uuid)
         .map_err(|e| {
-            Json(Error::server_error(format!("error: {:?}", e)))
-        })))
+            Json(Error::server_error(format!("error adding to group: {}", e)))
+        })?;
+    Ok(Json(()))
 }
