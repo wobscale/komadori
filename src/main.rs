@@ -44,17 +44,13 @@ mod oauth_routes;
 mod github;
 
 use rocket::http::Status;
-use rocket::response::NamedFile;
 use rocket::{Request, Response};
 use rocket::fairing::{Fairing, Info, Kind};
 use rocket::http::{ContentType, Header, Method};
-use std::path::{Path, PathBuf};
 use diesel::prelude::*;
 use std::env;
 use std::time::Instant;
 use std::io::Cursor;
-use multi_reactor_drifting::{Handle, Future};
-use futures::Future as _TheTimeAfterNow;
 
 extern crate chrono;
 extern crate fern;
@@ -69,26 +65,6 @@ fn healthz(conn: db::Conn) -> Result<String, rocket::response::Failure> {
             error!("error executing db healthcheck: {}", e);
             rocket::response::Failure(Status::ServiceUnavailable)
         })
-}
-
-#[get("/<file..>", rank = 3)]
-fn files(file: PathBuf) -> Option<NamedFile> {
-    NamedFile::open(Path::new("static/").join(file)).ok()
-}
-
-#[get("/test")]
-fn test(handle: Handle, request_id: request_id::RequestID, request_id2: request_id::RequestID) -> Future<String, String> {
-    let client = hyper::Client::new(&handle.into());
-    let base_path = std::env::var("HYDRA_URL").unwrap();
-    let c = hydra_oauthed_client::HydraClientWrapper::new(client, base_path.trim_right_matches("/"), "admin".to_owned(), "password".to_owned());
-
-    println!("{}", *request_id);
-    if *request_id != *request_id2 {
-        panic!("");
-    }
-
-    Future(Box::new(c.client().warden_api().get_group("users").map(|g| { g.id().unwrap().clone() })
-        .map_err(|e| format!("could not get group users: {:?}", e))))
 }
 
 fn main() {
@@ -155,7 +131,7 @@ fn main() {
         .manage(pool)
         .manage(github_oauth_config)
         .manage(hydra_builder)
-        .mount("/", routes![healthz, files, test])
+        .mount("/", routes![healthz])
         .mount("/", user_routes::routes())
         .mount("/", admin_routes::routes())
         .mount("/", oauth_routes::routes())
