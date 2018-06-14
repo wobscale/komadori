@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import qs from 'query-string';
 import PropTypes from 'prop-types';
-import config from './config';
+import GithubAPI from '../api/github';
 
 class GithubOauthWindow extends Component {
   constructor(props) {
@@ -31,13 +31,7 @@ class GithubOauthWindow extends Component {
       };
       window.close();
     }
-    fetch(`${config.api}/github/authorize_url`, { credentials: 'include' })
-      .then((res) => {
-        if (res.status > 300) {
-          throw new Error(res.statusText);
-        }
-        return res.text();
-      })
+    GithubAPI.authorizeUrl()
       .then((url) => {
         window.location = url;
       })

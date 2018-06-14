@@ -16,7 +16,13 @@ class GithubLogin extends Component {
     };
   }
 
+  componentDidMount() {
+    this.startLoginFlow();
+  }
+
   startLoginFlow() {
+    this.setState({ step: steps.loggingIn });
+
     // Stolen partially from
     // https://github.com/rust-lang/crates.io/blob/e8cae0e872be4edf02f0876db4e85c082e70ecc9/app/routes/login.js#L14-L40
     // Used and modified under the terms of the MIT license.
@@ -68,7 +74,6 @@ class GithubLogin extends Component {
 
   render() {
     if (this.state.step === steps.loggingIn) {
-      this.startLoginFlow();
       return (
         <div className="logging-in">
           <p>Please complete the login in the new window...</p>
@@ -85,7 +90,7 @@ class GithubLogin extends Component {
         <div>
           <h2>An error occured</h2>
           <div className="error"> {this.state.err.message} </div>
-          <button onClick={() => { this.setState({ step: steps.loggingIn }); }}>
+          <button onClick={() => { this.startLoginFlow(); }}>
             Retry
           </button>
         </div>
