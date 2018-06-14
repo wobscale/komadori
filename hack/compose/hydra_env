@@ -1,0 +1,8 @@
+DATABASE_URL=postgres://hydra:hydrapassword@db:5432/hydra?sslmode=disable
+SYSTEM_SECRET=_yuW7HxjIBHbkOcaa3Nd3tbh1dUCY2hYID93uPSw02iKmWX2ZlSaB2nZixEB0ZIV3w36zSoRmn0YLew1R
+FORCE_ROOT_CLIENT_CREDENTIALS=admin:password
+CONSENT_URL=http://localhost:3000/user/consent
+ISSUER=http://localhost:4444/
+LOG_LEVEL=debug
+DISABLE_TELEMETRY=1
+

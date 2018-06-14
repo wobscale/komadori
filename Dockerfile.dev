@@ -1,0 +1,7 @@
+FROM rustlang/rust:nightly
+
+COPY . /usr/src/komadori
+WORKDIR /usr/src/komadori
+RUN cargo build
+
+ENTRYPOINT ["/usr/src/komadori/target/debug/komadori"]
