@@ -1,4 +1,5 @@
 pub mod users;
+pub mod groups;
 
 use diesel::PgConnection;
 use r2d2;
