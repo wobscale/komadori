@@ -1,4 +1,5 @@
 use db;
+use db::groups::Group;
 use diesel::prelude::*;
 use diesel;
 use std::time::{SystemTime, Instant};
@@ -28,17 +29,6 @@ pub struct User {
     pub username: String,
     pub role: Option<String>,
     pub email: String,
-    created_at: SystemTime,
-    updated_at: SystemTime,
-}
-
-#[derive(Debug, Clone, Queryable, Identifiable)]
-pub struct Group {
-    id: i32,
-    pub uuid: Uuid,
-    pub name: String,
-    pub public: bool,
-    pub description: String,
     created_at: SystemTime,
     updated_at: SystemTime,
 }

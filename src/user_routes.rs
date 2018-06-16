@@ -187,8 +187,8 @@ pub struct GroupResp {
     pub public: bool,
 }
 
-impl<'a> From<&'a db::users::Group> for GroupResp {
-    fn from(g: &'a db::users::Group) -> Self {
+impl<'a> From<&'a db::groups::Group> for GroupResp {
+    fn from(g: &'a db::groups::Group) -> Self {
         GroupResp {
             uuid: g.uuid.simple().to_string(),
             name: g.name.clone(),
