@@ -209,7 +209,7 @@ pub struct UserResp {
 }
 
 impl UserResp {
-    pub fn new(user: DBUser, conn: db::Conn) -> Result<UserResp, Error> {
+    pub fn new(user: DBUser, conn: &db::Conn) -> Result<UserResp, Error> {
 
         let groups = user.groups(conn)
             .map_err(|e| {
@@ -316,7 +316,7 @@ pub fn auth_user(
                         "user_uuid".to_owned(),
                         u.uuid.simple().to_string(),
                     ));
-                    let ru = match UserResp::new(u, conn) {
+                    let ru = match UserResp::new(u, &conn) {
                         Err(e) => {
                             return Json(Err(e));
                         }
@@ -336,7 +336,7 @@ pub fn auth_user(
 
 #[get("/user", format = "application/json")]
 pub fn get_user(user: User, conn: db::Conn) -> Result<Json<UserResp>, Json<Error>> {
-    UserResp::new(user, conn)
+    UserResp::new(user, &conn)
         .map(|r| {
             Json(r)
         })
