@@ -68,7 +68,21 @@ impl<'a> NewUser<'a> {
     }
 }
 
+
 impl User {
+    pub fn list(conn: &diesel::PgConnection) -> Result<Vec<Self>, GetUserError> {
+        use diesel::prelude::*;
+        use schema::users::dsl::*;
+
+        match users.load::<User>(conn) {
+            Ok(us) => Ok(us),
+            Err(e) => {
+                error!("error getting all users {}", e);
+                Err(GetUserError::DbError(e))
+            }
+        }
+    }
+
     pub fn from_uuid(conn: &diesel::PgConnection, uuid_: Uuid) -> Result<Self, GetUserError> {
         use diesel::prelude::*;
         use schema::users::dsl::*;
@@ -81,7 +95,7 @@ impl User {
                 }
             },
             Err(e) => {
-                error!("error getting user {}", uuid_);
+                error!("error getting user {}: {}", uuid_, e);
                 Err(GetUserError::DbError(e))
             }
         }
@@ -122,7 +136,7 @@ impl User {
         }
     }
 
-    pub fn groups(&self, conn: db::Conn) -> Result<Vec<Group>, String> {
+    pub fn groups(&self, conn: &db::PgConnection) -> Result<Vec<Group>, String> {
         use diesel::prelude::*;
 
         groups::table.left_join(users_groups::table.on(users_groups::user_id.eq(self.id)))
