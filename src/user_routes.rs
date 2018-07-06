@@ -1,15 +1,12 @@
 use db;
 use db::users::User as DBUser;
+use types::{CookieUser, PartialUser};
 use oauth;
 use diesel;
 use diesel::result::Error as DieselErr;
 use rocket;
 use rocket::State;
 use rocket_contrib::json::Json;
-use uuid::Uuid;
-use rocket::http::Status;
-use rocket::Outcome;
-use rocket::request::{FromRequest, Request};
 use rocket::http::{Cookie, Cookies};
 use github_rs::client::Executor;
 use github_rs::client::Github;
@@ -19,158 +16,6 @@ use errors::Error;
 pub fn routes() -> Vec<rocket::Route> {
     routes![create_user, logout_user, auth_user, get_user]
 }
-
-pub type User = DBUser;
-
-impl<'a, 'r> FromRequest<'a, 'r> for User {
-    type Error = ();
-
-    fn from_request(request: &'a Request<'r>) -> rocket::request::Outcome<Self, ()> {
-        let uuid_ = {
-            // ensure cookies is dropped before the PartialUser::from_request so we don't error out
-            // on too many cookies
-            let mut cookies = request.cookies();
-            match cookies.get_private("user_uuid") {
-                Some(uuid) => {
-                    debug!("got user_uuid from cookie: {}", uuid);
-                    match Uuid::parse_str(&uuid.value()) {
-                        Ok(u) => Some(u),
-                        Err(e) => {
-                            error!("could not decode user's uuid: {}", e);
-                            return Outcome::Failure((Status::InternalServerError, ()));
-                        }
-                    }
-                }
-                None => {
-                    debug!("cookie had no user_uuid");
-                    None
-                }
-            }
-        };
-
-        let db = request.guard::<rocket::State<db::Pool>>()?;
-        let db = match db.get() {
-            Ok(db) => db,
-            Err(e) => {
-                error!("error getting db: {}", e);
-                return Outcome::Failure((Status::InternalServerError, ()));
-            }
-        };
-
-        let uuid_ = match uuid_ {
-            Some(u) => u,
-            None => {
-                // If we have a github oauth login thing going, let's try that
-                debug!("attempting to get uuid from partial-user");
-                match PartialUser::from_request(request) {
-                    Outcome::Success(pu) => {
-                        match DBUser::from_oauth_provider(&*db, &pu.provider, &pu.provider_id) {
-                            Ok(u) => {
-                                // We should also save this user in the cookie to avoid the
-                                // from_partial_user next time
-                                // TODO: this is absolutely the wrong place code-organization-wise
-                                // to do this
-                                {
-                                    let mut cookies = request.cookies();
-                                    cookies.add_private(Cookie::new(
-                                        "user_uuid".to_owned(),
-                                        u.uuid.simple().to_string(),
-                                    ));
-                                }
-                                u.uuid
-                            }
-                            Err(e) => {
-                                error!("could not create partial user from partial user: {:?}", e);
-                                return Outcome::Failure((Status::InternalServerError, ()));
-                            }
-                        }
-                    }
-                    Outcome::Forward(()) => return Outcome::Forward(()),
-                    Outcome::Failure(e) => {
-                        return Outcome::Failure(e);
-                    }
-                }
-            }
-        };
-        match User::from_uuid(&*db, uuid_) {
-            Err(db::users::GetUserError::NoSuchUser) => {
-                Outcome::Failure((Status::NotFound, ()))
-            },
-            Err(e) => {
-                error!("error using uuid to get user: {:?}", e);
-                Outcome::Failure((Status::InternalServerError, ()))
-            }
-            Ok(u) => Outcome::Success(u),
-        }
-    }
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct PartialUser {
-    provider: oauth::Provider,
-    provider_id: i32,
-    provider_name: String,
-    access_token: String,
-}
-
-impl<'a, 'r> FromRequest<'a, 'r> for PartialUser {
-    type Error = ();
-
-
-    fn from_request(request: &'a Request<'r>) -> rocket::request::Outcome<Self, ()> {
-        let token = match oauth::SerializableToken::from_request(request) {
-            Outcome::Success(token) => token,
-            Outcome::Forward(()) => {
-                return Outcome::Forward(());
-            }
-            Outcome::Failure(e) => {
-                return Outcome::Failure(e);
-            }
-        };
-        // Let's make sure the token is valid..
-        let (uid, name) = match token.provider {
-            oauth::Provider::Github => {
-                let client = match Github::new(&token.token.access_token) {
-                    Ok(c) => c,
-                    Err(e) => {
-                        error!("could not create client: {}", e);
-                        return Outcome::Failure((Status::InternalServerError, ()));
-                    }
-                };
-
-
-                #[derive(Deserialize)]
-                struct GithubUser {
-                    _email: Option<String>,
-                    _name: Option<String>,
-                    login: String,
-                    id: i32,
-                    _avatar_url: Option<String>,
-                }
-
-
-                let user = match client.get().user().execute::<GithubUser>() {
-                    Err(e) => {
-                        error!("could not get github user: {}", e);
-                        return Outcome::Failure((Status::InternalServerError, ()));
-                    }
-                    Ok((_, _, None)) => {
-                        return Outcome::Failure((Status::InternalServerError, ()));
-                    }
-                    Ok((_, _, Some(u))) => u,
-                };
-                (user.id, user.login)
-            }
-        };
-        Outcome::Success(PartialUser {
-            provider: token.provider,
-            provider_id: uid,
-            provider_name: name,
-            access_token: token.token.access_token,
-        })
-    }
-}
-
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CreateUserRequest {
@@ -335,7 +180,8 @@ pub fn auth_user(
 }
 
 #[get("/user", format = "application/json")]
-pub fn get_user(user: User, conn: db::Conn) -> Result<Json<UserResp>, Json<Error>> {
+pub fn get_user(user: CookieUser, conn: db::Conn) -> Result<Json<UserResp>, Json<Error>> {
+    let user = user.0;
     UserResp::new(user, &conn)
         .map(|r| {
             Json(r)

@@ -42,6 +42,7 @@ mod admin_routes;
 mod user_routes;
 mod oauth_routes;
 mod github;
+mod types;
 
 use rocket::http::Status;
 use rocket::{Request, Response};
