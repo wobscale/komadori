@@ -10,7 +10,8 @@ use rocket_contrib::json::Json;
 
 use errors::Error;
 use permissions;
-use user_routes::{User, UserResp};
+use user_routes::UserResp;
+use types::CookieUser;
 
 lazy_static! {
     static ref BOOTSTRAP_TOKEN: String = rand::thread_rng()
@@ -39,9 +40,10 @@ pub struct BootstrapAdminReq {
 #[post("/admin/bootstrap", format = "application/json", data = "<req>")]
 pub fn bootstrap_admin(
     conn: db::Conn,
-    user: User,
+    user: CookieUser,
     req: Json<BootstrapAdminReq>,
 ) -> Result<Json<()>, Json<Error>> {
+    let user = user.0;
     if !constant_time_eq::constant_time_eq(req.token.as_bytes(), (*BOOTSTRAP_TOKEN).as_bytes()) {
         return Err(Json(Error::client_error("invalid bootstrap token".to_string())));
     }
@@ -80,13 +82,13 @@ pub fn list_users(
     }
 }
 
-pub struct Admin(User);
+pub struct Admin(CookieUser);
 
 impl<'a, 'r> FromRequest<'a, 'r> for Admin {
     type Error = ();
 
     fn from_request(request: &'a Request<'r>) -> rocket::request::Outcome<Self, ()> {
-        let u = match User::from_request(request) {
+        let u = match CookieUser::from_request(request) {
             Outcome::Success(u) => u,
             Outcome::Forward(f) => {
                 return Outcome::Forward(f);
@@ -104,7 +106,7 @@ impl<'a, 'r> FromRequest<'a, 'r> for Admin {
             }
         };
 
-        let groups = match u.groups(&*db) {
+        let groups = match u.0.groups(&*db) {
             Err(e) => {
                 error!("error getting groups: {:?}", e);
                 return Outcome::Failure((Status::InternalServerError, ()));
