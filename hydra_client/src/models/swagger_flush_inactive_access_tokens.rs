@@ -13,28 +13,28 @@
 use serde_json::Value;
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct SwaggerDoesWardenAllowTokenAccessRequestParameters {
+pub struct SwaggerFlushInactiveAccessTokens {
   #[serde(rename = "Body")]
-  body: Option<::models::WardenTokenAccessRequest>
+  body: Option<::models::FlushInactiveOAuth2TokensRequest>
 }
 
-impl SwaggerDoesWardenAllowTokenAccessRequestParameters {
-  pub fn new() -> SwaggerDoesWardenAllowTokenAccessRequestParameters {
-    SwaggerDoesWardenAllowTokenAccessRequestParameters {
+impl SwaggerFlushInactiveAccessTokens {
+  pub fn new() -> SwaggerFlushInactiveAccessTokens {
+    SwaggerFlushInactiveAccessTokens {
       body: None
     }
   }
 
-  pub fn set_body(&mut self, body: ::models::WardenTokenAccessRequest) {
+  pub fn set_body(&mut self, body: ::models::FlushInactiveOAuth2TokensRequest) {
     self.body = Some(body);
   }
 
-  pub fn with_body(mut self, body: ::models::WardenTokenAccessRequest) -> SwaggerDoesWardenAllowTokenAccessRequestParameters {
+  pub fn with_body(mut self, body: ::models::FlushInactiveOAuth2TokensRequest) -> SwaggerFlushInactiveAccessTokens {
     self.body = Some(body);
     self
   }
 
-  pub fn body(&self) -> Option<&::models::WardenTokenAccessRequest> {
+  pub fn body(&self) -> Option<&::models::FlushInactiveOAuth2TokensRequest> {
     self.body.as_ref()
   }
 

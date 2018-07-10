@@ -4,6 +4,7 @@ use serde_json;
 
 #[derive(Debug)]
 pub enum Error<T> {
+    UriError(hyper::error::UriError),
     Hyper(hyper::Error),
     Serde(serde_json::Error),
     ApiError(ApiError<T>),
@@ -50,8 +51,8 @@ impl<T> From<serde_json::Error> for Error<T> {
 
 use super::models::*;
 
-mod health_api;
-pub use self::health_api::{ HealthApi, HealthApiClient };
+mod request;
+
 mod json_web_key_api;
 pub use self::json_web_key_api::{ JsonWebKeyApi, JsonWebKeyApiClient };
 mod o_auth2_api;
