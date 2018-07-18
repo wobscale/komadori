@@ -169,6 +169,7 @@ impl<'a, 'r> FromRequest<'a, 'r> for OauthUser {
         let raw_auth = match request.headers().get_one("authorization") {
             Some(s) => s,
             None => {
+                debug!("No authorization header");
                 return Outcome::Failure((Status::Unauthorized, ()));
             }
         };
@@ -181,7 +182,11 @@ impl<'a, 'r> FromRequest<'a, 'r> for OauthUser {
             },
         };
 
-        let token = auth.token;
+        // split off the 'Bearer' prefix
+        let token = auth.token.split_whitespace().last().unwrap_or("");
+        if token == "" {
+            return Outcome::Failure((Status::Unauthorized, ()));
+        }
 
         let hydra = request.guard::<rocket::State<hydra::client::ClientBuilder>>()?;
         let handle = request.guard::<Handle>()?;
@@ -229,6 +234,7 @@ impl<'a, 'r> FromRequest<'a, 'r> for OauthUser {
 
                 match User::from_uuid(&*db, uuid) {
                     Err(db::users::GetUserError::NoSuchUser) => {
+                        debug!("no such user for uuid: {}", uuid);
                         Err(Outcome::Failure((Status::NotFound, ())))
                     },
                     Err(e) => {
