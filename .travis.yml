@@ -6,4 +6,4 @@ matrix:
     node_js:
     - node
     script:
-    - cd frontend && npm install && npm run build && npm test && npm run lint
+    - cd frontend && npm install && npm run build-css && npm run build && npm test && npm run lint
