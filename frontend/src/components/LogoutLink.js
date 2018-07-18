@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 
 const LogoutLink = props => (
   <div className="Logout">
-    <button onClick={props.onClick}>Log out</button>
+    <a href="#" onClick={props.onClick}>Log out</a>
   </div>
 );
 LogoutLink.propTypes = {

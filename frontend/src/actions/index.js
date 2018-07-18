@@ -175,17 +175,26 @@ export function doGetConsentInfo(id) {
 }
 
 export const ADMIN_BOOTSTRAPPED = 'ADMIN_BOOTSTRAPPED';
-export function adminBootstrapped() {
-  return {
-    type: ADMIN_BOOTSTRAPPED,
-  };
-}
 
 export function doBootstrapAdmin(token) {
   return (dispatch) => {
     AdminAPI.bootstrap(token)
       .then(() => {
-        dispatch(adminBootstrapped());
+        dispatch({ type: ADMIN_BOOTSTRAPPED });
+      })
+      .catch((e) => {
+        // TODO
+        console.error(e);
+      });
+  };
+}
+
+export const ADMIN_USER_LIST = 'ADMIN_USER_LIST';
+export function doAdminListUsers() {
+  return (dispatch) => {
+    AdminAPI.listUsers()
+      .then((users) => {
+        dispatch({ type: ADMIN_USER_LIST, data: users });
       })
       .catch((e) => {
         // TODO

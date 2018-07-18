@@ -28,6 +28,17 @@ function handleUserState(state = defaultUserState, action) {
   }
 }
 
+function handleAdminState(state = {}, action) {
+  switch (action.type) {
+    case a.ADMIN_USER_LIST:
+      return Object.assign({}, state, {
+        users: action.data,
+      });
+    default:
+      return state;
+  }
+}
+
 function handlePartialUserState(state = { partialUser: null }, action) {
   switch (action.type) {
     case a.RECEIVE_PARTIAL_USER:
@@ -83,6 +94,7 @@ const rootReducer = combineReducers({
   user: handleUserState,
   consent: handleConsentState,
   partialUser: handlePartialUserState,
+  admin: handleAdminState,
 });
 
 export default rootReducer;

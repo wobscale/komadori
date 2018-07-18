@@ -25,6 +25,20 @@ class AdminAPI {
       }
     });
   }
+
+  static listUsers() {
+    return fetch(`${config.api}/admin/users`, {
+      method: 'GET',
+      headers: { 'content-type': 'application/json' },
+      credentials: 'include',
+      mode: 'cors',
+    }).then((resp) => {
+      if (!resp.ok) {
+        throw new Error(`admin listusers error: ${resp.status}`);
+      }
+      return resp.json();
+    }).then(resp => resp.users);
+  }
 }
 
 export default AdminAPI;
