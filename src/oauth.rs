@@ -17,7 +17,7 @@ pub struct Token {
     pub refresh_token: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub enum Provider {
     Github,
 }
