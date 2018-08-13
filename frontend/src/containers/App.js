@@ -11,7 +11,7 @@ import GithubOauthWindow from '../github-oauth-window';
 import {
   Login, CreateAccount, GithubLogin,
   UserDashboard, UserConsent,
-  BootstrapAdmin,
+  NavWrapper, BootstrapAdmin,
 } from './AuthedContainers';
 
 class ReactApp extends Component {
@@ -55,12 +55,16 @@ class ReactApp extends Component {
             component={CreateAccount}
           />
           <Route
-            path="/user/dashboard"
-            component={UserDashboard}
+            path="/user"
+            render={props => <NavWrapper {...props} user={this.props.user.user} />}
           />
           <Route
             path="/user/consent"
             component={UserConsent}
+          />
+          <Route
+            path="/admin/"
+            render={props => <NavWrapper {...props} user={this.props.user.user} />}
           />
           <Route
             path="/admin/bootstrap"
@@ -74,6 +78,10 @@ class ReactApp extends Component {
 ReactApp.propTypes = {
   loading: PropTypes.bool.isRequired,
   dispatch: PropTypes.func.isRequired,
+  user: PropTypes.object,
+};
+ReactApp.defaultProps = {
+  user: null,
 };
 
 const mapStateToProps = (state) => {

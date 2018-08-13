@@ -1,98 +1,24 @@
-#![feature(plugin, custom_derive)]
-#![plugin(rocket_codegen)]
-
-extern crate multi_reactor_drifting;
-extern crate hyper;
-extern crate hydra_client;
-extern crate tokio_core;
-extern crate hydra_oauthed_client;
-extern crate constant_time_eq;
-#[macro_use]
-extern crate diesel;
-#[macro_use]
-extern crate diesel_migrations;
-extern crate github_rs;
-#[macro_use]
-extern crate lazy_static;
-extern crate oauth2;
-extern crate r2d2;
-extern crate r2d2_diesel;
-extern crate rand;
-extern crate reqwest;
-extern crate rocket;
-extern crate rocket_contrib;
-extern crate url;
-extern crate uuid;
-
-extern crate futures;
-extern crate serde;
-#[macro_use]
-extern crate serde_derive;
-extern crate serde_json;
-
-mod request_id;
-mod util;
-mod hydra;
-mod schema;
-mod models;
-mod permissions;
-mod errors;
-mod db;
-mod oauth;
-mod admin_routes;
-mod user_routes;
-mod oauth_routes;
-mod github;
-
-use rocket::http::Status;
-use rocket::response::NamedFile;
-use rocket::{Request, Response};
-use rocket::fairing::{Fairing, Info, Kind};
-use rocket::http::{ContentType, Header, Method};
-use std::path::{Path, PathBuf};
-use diesel::prelude::*;
-use std::env;
-use std::time::Instant;
-use std::io::Cursor;
-use multi_reactor_drifting::{Handle, Future};
-use futures::Future as _TheTimeAfterNow;
-
 extern crate chrono;
 extern crate fern;
 #[macro_use]
 extern crate log;
 
-#[get("/healthz")]
-fn healthz(conn: db::Conn) -> Result<String, rocket::response::Failure> {
-    conn.execute("SELECT 1")
-        .map(|_| "healthy".into())
-        .map_err(|e| {
-            error!("error executing db healthcheck: {}", e);
-            rocket::response::Failure(Status::ServiceUnavailable)
-        })
-}
+extern crate komadori;
 
-#[get("/<file..>", rank = 3)]
-fn files(file: PathBuf) -> Option<NamedFile> {
-    NamedFile::open(Path::new("static/").join(file)).ok()
-}
+use komadori::*;
+use std::env;
 
-#[get("/test")]
-fn test(handle: Handle, request_id: request_id::RequestID, request_id2: request_id::RequestID) -> Future<String, String> {
-    let client = hyper::Client::new(&handle.into());
-    let base_path = std::env::var("HYDRA_URL").unwrap();
-    let c = hydra_oauthed_client::HydraClientWrapper::new(client, base_path.trim_right_matches("/"), "admin".to_owned(), "password".to_owned());
-
-    println!("{}", *request_id);
-    if *request_id != *request_id2 {
-        panic!("");
-    }
-
-    Future(Box::new(c.client().warden_api().get_group("users").map(|g| { g.id().unwrap().clone() })
-        .map_err(|e| format!("could not get group users: {:?}", e))))
-}
 
 fn main() {
+    let env = {
+        let var = env::var("ENVIRONMENT").unwrap_or("".to_owned());
+        match var.as_str() {
+            "dev" => Environment::Dev,
+            "prod" => Environment::Prod,
+            _ => panic!("ENVIRONMENT must be set to 'dev' or 'prod'"),
+        }
+    };
+
     fern::Dispatch::new()
         .format(|out, message, record| {
             out.finish(format_args!(
@@ -105,90 +31,61 @@ fn main() {
         })
         .level(log::LevelFilter::Warn)
         .level_for("rocket", log::LevelFilter::Info)
-        .level_for("komadori", log::LevelFilter::Debug)
+        .level_for("komadori", {
+            if env == Environment::Dev {
+                log::LevelFilter::Debug
+            } else {
+                log::LevelFilter::Warn
+            }
+        })
         .chain(std::io::stdout())
         .apply()
         .unwrap();
-    let mut rkt = rocket::ignite();
 
-    let base_url = if rkt.config().environment.is_dev() {
-        env::var("BASE_URL").unwrap_or(format!("http://127.0.0.1:{}", rkt.config().port))
+    info!("Running with environmeng: {:?}", env);
+
+    let base_url = if env == Environment::Dev {
+        env::var("BASE_URL").unwrap_or("http://127.0.0.1:8000".to_owned())
     } else {
-        env::var("BASE_URL").expect("Must set BASE_URL")
+        must_env("BASE_URL")
     };
 
-    if rkt.config().environment.is_dev() {
-        rkt = rkt.attach(CORS());
-    }
+    let hydra_conf = {
+        let url = must_env("HYDRA_URL");
+        let client_id = must_env("HYDRA_CLIENT_ID");
+        let client_secret = must_env("HYDRA_CLIENT_SECRET");
+        HydraConfig {
+            url: url,
+            client_id: client_id,
+            client_secret: client_secret,
+        }
+    };
+
+    let provider = {
+        let client_id = env::var("GITHUB_CLIENT_ID").expect("GITHUB_CLIENT_ID must be set");
+        let client_secret = env::var("GITHUB_SECRET_KEY").expect("GITHUB_SECRET_KEY must be set");
+        OauthProviderConfig{
+            provider: oauth::Provider::Github,
+            client_id: client_id,
+            client_secret: client_secret,
+        }
+    };
 
     let pool = {
-        let uri = &env::var("DATABASE_URL").expect("DATABASE_URL environment variable must be set");
+        let uri = &must_env("DATABASE_URL");
         db::db_pool(uri).expect("error connecting to database")
     };
 
-    let hydra_builder = {
-        hydra::client::ClientBuilder::new(
-            &env::var("HYDRA_URL").expect("Must set HYDRA_URL"),
-            &env::var("HYDRA_CLIENT_ID").expect("Must set HYDRA_CLIENT_ID"),
-            &env::var("HYDRA_CLIENT_SECRET").expect("Must set HYDRA_CLIENT_SECRET"),
-        )
-    };
-    permissions::initialize_groups(&hydra_builder).unwrap();
-
-    let github_oauth_config = {
-        let client_id = env::var("GITHUB_CLIENT_ID").expect("GITHUB_CLIENT_ID must be set");
-        let client_secret = env::var("GITHUB_SECRET_KEY").expect("GITHUB_SECRET_KEY must be set");
-        github::OauthConfig::new(client_id, client_secret, base_url)
-    };
-
-    {
-        let timer = Instant::now();
-        db::run_migrations(&pool).expect("error running migrations");
-        debug!(
-            "running migrations took {}",
-            (timer.elapsed().as_secs() as f64 + timer.elapsed().subsec_nanos() as f64 * 1e-9)
-        );
-    }
-
-    rkt
-        .attach(request_id::RequestIDFairing)
-        .manage(pool)
-        .manage(github_oauth_config)
-        .manage(hydra_builder)
-        .mount("/", routes![healthz, files, test])
-        .mount("/", user_routes::routes())
-        .mount("/", admin_routes::routes())
-        .mount("/", oauth_routes::routes())
-        .mount("/github", github::routes())
-        .launch();
+    rocket(komadori::Config{
+        environment: env,
+        base_url: base_url,
+        hydra: hydra_conf,
+        oauth: vec![provider],
+        pool: pool,
+    })
+    .launch();
 }
 
-pub struct CORS();
-
-impl Fairing for CORS {
-    fn info(&self) -> Info {
-        Info {
-            name: "Add CORS headers to requests",
-            kind: Kind::Response,
-        }
-    }
-
-    fn on_response(&self, request: &Request, response: &mut Response) {
-        response.set_header(Header::new(
-            "Access-Control-Allow-Origin",
-            "http://localhost:3000",
-        ));
-        response.set_header(Header::new(
-            "Access-Control-Allow-Methods",
-            "POST, GET, OPTIONS",
-        ));
-        response.set_header(Header::new("Access-Control-Allow-Headers", "Content-Type"));
-        response.set_header(Header::new("Access-Control-Allow-Credentials", "true"));
-
-        if request.method() == Method::Options {
-            response.set_status(Status::Ok);
-            response.set_header(ContentType::Plain);
-            response.set_sized_body(Cursor::new(""));
-        }
-    }
+fn must_env(var: &str) -> String {
+    env::var(var).expect(&format!("Environment variable '{}' must be set", var))
 }

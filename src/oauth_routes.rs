@@ -6,7 +6,7 @@ use rocket_contrib::json::Json;
 use errors::Error;
 use hydra;
 use hydra_client;
-use user_routes::User;
+use types::CookieUser;
 use multi_reactor_drifting::{Handle, Future};
 use futures::Future as _______________;
 
@@ -62,10 +62,11 @@ pub struct AcceptConsent {
 #[post("/oauth/consent/accept", format = "application/json", data = "<req>")]
 pub fn accept_consent(
     req: Json<AcceptConsent>,
-    user: User,
+    user: CookieUser,
     hydra: State<hydra::client::ClientBuilder>,
     handle: Handle,
 ) -> Future<Json<Result<(), Error>>, ()> {
+    let user = user.0;
     let client = hydra.build(&handle.into()).client();
     // note: email is a required 'extra' attribute for some oauth proxies; set it to the uuid to
     // allow this oidc to better interoperate with those even though technically this isn't right.
@@ -102,7 +103,7 @@ pub struct RejectConsent {
 #[post("/oauth/consent/reject", format = "application/json", data = "<req>")]
 pub fn reject_consent(
     req: Json<RejectConsent>,
-    _user: User,
+    _user: CookieUser,
     hydra: State<hydra::client::ClientBuilder>,
     handle: Handle,
 ) -> Future<Json<Result<(), Error>>, ()> {

@@ -3,6 +3,7 @@ use serde_json;
 use rocket::request::{FromRequest, Request};
 use rocket::http::Status;
 use rocket::Outcome;
+use std::string::ToString;
 use oauth2;
 
 // Copy of oauth2::Token so we can derive for it
@@ -16,13 +17,13 @@ pub struct Token {
     pub refresh_token: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub enum Provider {
     Github,
 }
 
-impl Provider {
-    pub fn to_string(&self) -> String {
+impl ToString for Provider {
+    fn to_string(&self) -> String {
         match *self {
             Provider::Github => "Github".to_owned(),
         }

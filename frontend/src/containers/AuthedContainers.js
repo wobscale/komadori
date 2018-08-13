@@ -5,6 +5,7 @@ import OldGithubLogin from './LoginWithGithubContainer';
 import OldUserConsent from './ConsentContainer';
 import OldCreateAccount from './CreateAccount';
 import OldUserDashboard from './UserDashboardContainer';
+import OldNavWrapper from '../components/NavWrapper';
 import OldBootstrapAdmin from './AdminBootstrapContainer';
 
 const userIsAuthenticated = connectedRouterRedirect({
@@ -60,5 +61,6 @@ export const CreateAccount = userIsNotAuthenticated(OldCreateAccount);
 export const GithubLogin = userIsNotAuthenticated(userIsNotPartial(OldGithubLogin));
 
 export const UserDashboard = userIsAuthenticated(OldUserDashboard);
+export const NavWrapper = userIsAuthenticated(OldNavWrapper);
 export const UserConsent = userIsAuthenticated(OldUserConsent);
 export const BootstrapAdmin = userIsAuthenticated(userIsNotAdmin(OldBootstrapAdmin));

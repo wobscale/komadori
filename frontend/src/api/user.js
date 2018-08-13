@@ -17,14 +17,11 @@ class UserAPI {
         };
       }
       return resp.json().then((user) => {
-        if (user.Ok) {
+        if (user) {
           return {
             loggedIn: true,
-            user: user.Ok,
+            user,
           };
-        }
-        if (user.Err) {
-          throw new Error('api error: ', user.Err);
         }
         throw new Error('error: api gave back invalid json: ', user);
       });
