@@ -14,8 +14,8 @@ const NavWrapper = ({ user, match }) => (
       <div className="leftbar">
         <nav className="menu">
           <span>Sections</span> <br /> <br />
-          <Link to={`${match.url}`}>Dashboard</Link> <br />
-          <Link to={`${match.url}/security`}>Security</Link> <br />
+          <Link to="/user/dashboard">Dashboard</Link> <br />
+          <Link to="/user/security">Security</Link> <br />
           {
             userUtil.userIsAdmin(user) ?
               <div className="admin-nav-section">
@@ -30,8 +30,8 @@ const NavWrapper = ({ user, match }) => (
       <div className="main">
         <Switch>
           <Route path="/admin/users" component={AdminManageUsers} />
-          <Route path={`${match.url}/security`} component={Security} />
-          <Route path={`${match.url}/`} component={UserDashboard} />
+          <Route path="/user/security" component={Security} />
+          <Route path="/" component={UserDashboard} />
         </Switch>
       </div>
     </div>
