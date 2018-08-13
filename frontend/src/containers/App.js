@@ -55,7 +55,7 @@ class ReactApp extends Component {
             component={CreateAccount}
           />
           <Route
-            path="/user/dashboard"
+            path="/user"
             render={props => <NavWrapper {...props} user={this.props.user.user} />}
           />
           <Route
