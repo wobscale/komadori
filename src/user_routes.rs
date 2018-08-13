@@ -8,8 +8,6 @@ use rocket;
 use rocket::State;
 use rocket_contrib::json::Json;
 use rocket::http::{Cookie, Cookies};
-use github_rs::client::Executor;
-use github_rs::client::Github;
 use github;
 use errors::Error;
 
@@ -51,6 +49,18 @@ pub struct UserResp {
     pub email: String,
 
     pub groups: Vec<GroupResp>,
+
+    pub auth_metadata: AuthMetadata,
+}
+
+#[derive(Debug, Serialize)]
+pub struct AuthMetadata {
+    pub github: Option<Result<GithubAuthMetadata, String>>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct GithubAuthMetadata {
+    username: String,
 }
 
 impl UserResp {
@@ -61,12 +71,29 @@ impl UserResp {
                 Error::server_error(format!("error getting groups: {}", e))
             })?;
 
+        // TODO: more oauth providers will break this
+        let github_account = {
+            user.github_account(conn)
+                .map_err(|e| {
+                    Error::server_error(format!("error getting accounts: {}", e))
+                })
+            .and_then(|c| {
+                github::get_github_user(&c.access_token)
+            }).map(|gh| GithubAuthMetadata{
+                username: gh.login
+            })
+            .map_err(|e| format!("{:?}", e))
+        };
+
         Ok(UserResp {
             uuid: user.uuid.simple().to_string(),
             username: user.username,
             role: user.role,
             email: user.email,
             groups: groups.iter().map(|g| g.into()).collect(),
+            auth_metadata: AuthMetadata{
+                github: Some(github_account),
+            },
         })
     }
 }
@@ -111,39 +138,9 @@ pub fn auth_user(
                 }
             };
 
-            let client = match Github::new(&token.access_token) {
-                Ok(c) => c,
-                Err(e) => {
-                    return Json(Err(Error::server_error(format!(
-                        "could not create github client: {}",
-                        e
-                    ))));
-                }
-            };
-
-            // Now use the access token to get this user's github info. id is the important thing.
-            #[derive(Deserialize)]
-            struct GithubUser {
-                _email: Option<String>,
-                _name: Option<String>,
-                login: String,
-                id: i32,
-                _avatar_url: Option<String>,
-            }
-
-            let user = match client.get().user().execute::<GithubUser>() {
-                Err(e) => {
-                    error!("could not get github user: {}", e);
-                    return Json(Err(Error::client_error(
-                        "could not get github user with token".to_string(),
-                    )));
-                }
-                Ok((_, _, None)) => {
-                    return Json(Err(Error::server_error(
-                        "Github returned success, but with no user??".to_string(),
-                    )));
-                }
-                Ok((_, _, Some(u))) => u,
+            let user = match github::get_github_user(&token.access_token) {
+                Ok(u) => u,
+                Err(e) => return Json(Err(e)),
             };
 
             let pu = PartialUser {
@@ -205,6 +202,11 @@ pub fn create_user(
         )));
     }
 
+    let gh = match github::get_github_user(&req.partial_user.access_token) {
+        Ok(u) => u,
+        Err(e) => return Json(Err(e)),
+    };
+
     let create_res = match req.partial_user.provider {
         oauth::Provider::Github => db::users::NewUser{
             username: &req.username,
@@ -250,6 +252,11 @@ pub fn create_user(
                 role: None,
                 uuid: newuser.uuid.simple().to_string(),
                 groups: vec![],
+                auth_metadata: AuthMetadata{
+                    github: Some(Ok(GithubAuthMetadata{
+                        username: gh.login,
+                    })),
+                },
             }))
         }
     }

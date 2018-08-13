@@ -37,7 +37,7 @@ pub struct User {
 pub struct GithubAccount {
     pub id: i32,
     user_id: i32,
-    access_token: String,
+    pub access_token: String,
 }
 
 #[derive(Debug)]
@@ -161,5 +161,16 @@ impl User {
             ))
             .execute(&*conn)?;
         Ok(())
+    }
+
+    pub fn github_account(&self, conn: &db::PgConnection) -> Result<GithubAccount, String> {
+        use diesel::prelude::*;
+
+        github_accounts::table.left_join(users::table.on(github_accounts::user_id.eq(self.id)))
+            .select(github_accounts::table::all_columns())
+            .first::<GithubAccount>(&*conn)
+            .map_err(|e| {
+                format!("error loading groups: {}", e)
+            })
     }
 }
