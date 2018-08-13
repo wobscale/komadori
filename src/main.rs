@@ -6,6 +6,7 @@ extern crate log;
 extern crate komadori;
 
 use komadori::*;
+use komadori::provider;
 use std::env;
 
 
@@ -61,14 +62,10 @@ fn main() {
         }
     };
 
-    let provider = {
+    let github_provider = {
         let client_id = env::var("GITHUB_CLIENT_ID").expect("GITHUB_CLIENT_ID must be set");
         let client_secret = env::var("GITHUB_SECRET_KEY").expect("GITHUB_SECRET_KEY must be set");
-        OauthProviderConfig{
-            provider: oauth::Provider::Github,
-            client_id: client_id,
-            client_secret: client_secret,
-        }
+        provider::github::Github::new(client_id, client_secret, base_url.clone())
     };
 
     let pool = {
@@ -80,7 +77,7 @@ fn main() {
         environment: env,
         base_url: base_url,
         hydra: hydra_conf,
-        oauth: vec![provider],
+        github_provider: Some(github_provider),
         pool: pool,
     })
     .launch();

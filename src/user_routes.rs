@@ -1,20 +1,16 @@
 use db;
-use db::users::User as DBUser;
-use types::{CookieUser, PartialUser};
+use types::{CookieUser, PartialUser, UserResp, AuthMetadata, GithubAuthMetadata};
+use provider::github::get_github_user;
 use oauth;
 use diesel;
 use diesel::result::Error as DieselErr;
 use rocket;
-use rocket::State;
 use rocket_contrib::json::Json;
 use rocket::http::{Cookie, Cookies};
-use github_rs::client::Executor;
-use github_rs::client::Github;
-use github;
 use errors::Error;
 
 pub fn routes() -> Vec<rocket::Route> {
-    routes![create_user, logout_user, auth_user, get_user]
+    routes![create_user, logout_user, get_user]
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -22,53 +18,6 @@ pub struct CreateUserRequest {
     partial_user: PartialUser,
     username: String,
     email: String,
-}
-
-#[derive(Debug, Serialize)]
-pub struct GroupResp {
-    pub uuid: String,
-    pub name: String,
-    pub description: String,
-    pub public: bool,
-}
-
-impl<'a> From<&'a db::groups::Group> for GroupResp {
-    fn from(g: &'a db::groups::Group) -> Self {
-        GroupResp {
-            uuid: g.uuid.simple().to_string(),
-            name: g.name.clone(),
-            description: g.description.clone(),
-            public: g.public,
-        }
-    }
-}
-
-#[derive(Debug, Serialize)]
-pub struct UserResp {
-    pub uuid: String,
-    pub username: String,
-    pub role: Option<String>,
-    pub email: String,
-
-    pub groups: Vec<GroupResp>,
-}
-
-impl UserResp {
-    pub fn new(user: DBUser, conn: &db::Conn) -> Result<UserResp, Error> {
-
-        let groups = user.groups(conn)
-            .map_err(|e| {
-                Error::server_error(format!("error getting groups: {}", e))
-            })?;
-
-        Ok(UserResp {
-            uuid: user.uuid.simple().to_string(),
-            username: user.username,
-            role: user.role,
-            email: user.email,
-            groups: groups.iter().map(|g| g.into()).collect(),
-        })
-    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -82,101 +31,6 @@ pub struct GithubLoginRequest {
 pub enum AuthUserRequest {
     #[serde(rename = "github")]
     Github(GithubLoginRequest),
-}
-
-#[derive(Serialize)]
-#[serde(tag = "type")]
-pub enum AuthUserResp {
-    UserResp(UserResp),
-    PartialUser(PartialUser),
-}
-
-#[post("/user/auth", format = "application/json", data = "<req>")]
-pub fn auth_user(
-    conn: db::Conn,
-    req: Json<AuthUserRequest>,
-    github_oauth: State<github::OauthConfig>,
-    mut cookies: Cookies,
-) -> Json<Result<AuthUserResp, Error>> {
-    match req.0 {
-        AuthUserRequest::Github(g) => {
-            // We got github oauth tokens, exchange it for an access code
-            let token = match github_oauth.config().exchange_code(g.code.clone()) {
-                Ok(t) => t,
-                Err(e) => {
-                    error!("github exchange code error: {}", e);
-                    return Json(Err(Error::client_error(
-                        "could not exchange code".to_string(),
-                    )));
-                }
-            };
-
-            let client = match Github::new(&token.access_token) {
-                Ok(c) => c,
-                Err(e) => {
-                    return Json(Err(Error::server_error(format!(
-                        "could not create github client: {}",
-                        e
-                    ))));
-                }
-            };
-
-            // Now use the access token to get this user's github info. id is the important thing.
-            #[derive(Deserialize)]
-            struct GithubUser {
-                _email: Option<String>,
-                _name: Option<String>,
-                login: String,
-                id: i32,
-                _avatar_url: Option<String>,
-            }
-
-            let user = match client.get().user().execute::<GithubUser>() {
-                Err(e) => {
-                    error!("could not get github user: {}", e);
-                    return Json(Err(Error::client_error(
-                        "could not get github user with token".to_string(),
-                    )));
-                }
-                Ok((_, _, None)) => {
-                    return Json(Err(Error::server_error(
-                        "Github returned success, but with no user??".to_string(),
-                    )));
-                }
-                Ok((_, _, Some(u))) => u,
-            };
-
-            let pu = PartialUser {
-                provider: oauth::Provider::Github,
-                provider_id: user.id,
-                provider_name: user.login,
-                access_token: token.access_token,
-            };
-
-            // Now either this github account id could have an associated user, or not. If it does,
-            // return it, if not, assume this is a partial user.
-            match DBUser::from_oauth_provider(&conn, &pu.provider, &pu.provider_id) {
-                Ok(u) => {
-                    cookies.add_private(Cookie::new(
-                        "user_uuid".to_owned(),
-                        u.uuid.simple().to_string(),
-                    ));
-                    let ru = match UserResp::new(u, &conn) {
-                        Err(e) => {
-                            return Json(Err(e));
-                        }
-                        Ok(ru) => ru,
-                    };
-                    Json(Ok(AuthUserResp::UserResp(ru)))
-                }
-                Err(e) => {
-                    debug!("error getting user from partial user; assuming user doesn't exist: {:?}", e);
-                    // TODO: better error handling for client vs server errs
-                    Json(Ok(AuthUserResp::PartialUser(pu)))
-                }
-            }
-        }
-    }
 }
 
 #[get("/user", format = "application/json")]
@@ -204,6 +58,11 @@ pub fn create_user(
             "Email cannot be blank".to_string(),
         )));
     }
+
+    let gh = match get_github_user(&req.partial_user.access_token) {
+        Ok(u) => u,
+        Err(e) => return Json(Err(e)),
+    };
 
     let create_res = match req.partial_user.provider {
         oauth::Provider::Github => db::users::NewUser{
@@ -250,6 +109,11 @@ pub fn create_user(
                 role: None,
                 uuid: newuser.uuid.simple().to_string(),
                 groups: vec![],
+                auth_metadata: AuthMetadata{
+                    github: Some(Ok(GithubAuthMetadata{
+                        username: gh.login,
+                    })),
+                },
             }))
         }
     }

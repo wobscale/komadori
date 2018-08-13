@@ -135,18 +135,24 @@ export function doRejectConsent(id, reason) {
 
 export function doHandleAuth(provider, providerInfo) {
   return (dispatch) => {
-    UserApi.auth(provider, providerInfo.code, providerInfo.state)
-      .then((resp) => {
-        if (resp.type === 'PartialUser') {
-          // Needs to create an account
-          dispatch(receivePartialUser(resp));
-        } else if (resp.type === 'UserResp') {
-          dispatch(receiveUser(resp));
-        }
-      })
-      .catch((e) => {
-        console.error(e);
-      });
+    switch (provider) {
+      case 'github':
+        UserApi.githubAuth(provider, providerInfo.code, providerInfo.state)
+          .then((resp) => {
+            if (resp.type === 'PartialUser') {
+              // Needs to create an account
+              dispatch(receivePartialUser(resp));
+            } else if (resp.type === 'UserResp') {
+              dispatch(receiveUser(resp));
+            }
+          })
+          .catch((e) => {
+            console.error(e);
+          });
+        break;
+      default:
+        alert('Provider not recognized in handle auth; pls file a bug complaining about this')
+    }
   };
 }
 

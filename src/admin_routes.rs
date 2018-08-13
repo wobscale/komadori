@@ -10,7 +10,7 @@ use rocket_contrib::json::Json;
 
 use errors::Error;
 use permissions;
-use user_routes::UserResp;
+use types::UserResp;
 use types::CookieUser;
 
 lazy_static! {

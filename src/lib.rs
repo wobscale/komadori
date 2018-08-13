@@ -35,6 +35,7 @@ extern crate fern;
 #[macro_use]
 extern crate log;
 
+pub mod provider;
 mod request_id;
 mod hydra;
 mod schema;
@@ -46,9 +47,9 @@ pub mod oauth;
 mod admin_routes;
 mod user_routes;
 mod oauth_routes;
-mod github;
 mod types;
 
+use provider::OauthProvider;
 use rocket::http::Status;
 use rocket::{Request, Response};
 use rocket::fairing::{Fairing, Info, Kind};
@@ -69,16 +70,9 @@ pub struct HydraConfig {
     pub client_secret: String,
 }
 
-#[derive(Clone)]
-pub struct OauthProviderConfig {
-    pub provider: oauth::Provider,
-    pub client_id: String,
-    pub client_secret: String,
-}
-
 pub struct Config {
     pub pool: db::Pool,
-    pub oauth: Vec<OauthProviderConfig>,
+    pub github_provider: Option<provider::github::Github>,
     pub base_url: String,
     pub hydra: HydraConfig,
     pub environment:  Environment,
@@ -99,10 +93,6 @@ pub fn rocket(config: Config) -> rocket::Rocket {
         )
     };
 
-    assert!(config.oauth.len() == 1, "TODO: implement more oauth");
-    let oauth_conf = config.oauth[0].clone();
-    assert!(oauth_conf.provider == oauth::Provider::Github, "TODO: more oauth");
-
     {
         let timer = Instant::now();
         db::run_migrations(&config.pool).expect("error running migrations");
@@ -116,18 +106,24 @@ pub fn rocket(config: Config) -> rocket::Rocket {
 
     if rkt.config().environment.is_dev() {
         rkt = rkt.attach(CORS());
+        let p = config.github_provider.unwrap();
+        // TODO: no github in dev, github in prod and preprod?
+        rkt = rkt.mount("/", p.routes());
+        rkt = rkt.manage(p);
+    } else {
+        let p = config.github_provider.unwrap();
+        rkt = rkt.mount("/", p.routes());
+        rkt = rkt.manage(p);
     }
 
     rkt
         .attach(request_id::RequestIDFairing)
         .manage(config.pool)
-        .manage(github::OauthConfig::new(oauth_conf.client_id, oauth_conf.client_secret, config.base_url))
         .manage(hydra_builder)
         .mount("/", routes![healthz])
         .mount("/", user_routes::routes())
         .mount("/", admin_routes::routes())
         .mount("/", oauth_routes::routes())
-        .mount("/github", github::routes())
 }
 
 #[get("/healthz")]

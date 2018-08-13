@@ -1,7 +1,9 @@
 use db;
+use provider::github::get_github_user;
 use github_rs::client::Executor;
 use github_rs::client::Github;
 use oauth;
+use errors::Error;
 use hydra;
 use multi_reactor_drifting;
 use db::users::User as DBUser;
@@ -20,6 +22,91 @@ pub struct PartialUser {
     pub provider_id: i32,
     pub provider_name: String,
     pub access_token: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct UserResp {
+   pub uuid: String,
+    pub username: String,
+    pub role: Option<String>,
+    pub email: String,
+
+    pub groups: Vec<GroupResp>,
+
+    pub auth_metadata: AuthMetadata,
+}
+
+impl UserResp {
+    pub fn new(user: DBUser, conn: &db::Conn) -> Result<UserResp, Error> {
+
+        let groups = user.groups(conn)
+            .map_err(|e| {
+                Error::server_error(format!("error getting groups: {}", e))
+            })?;
+
+        // TODO: more oauth providers will break this
+        let github_account = {
+            user.github_account(conn)
+                .map_err(|e| {
+                    Error::server_error(format!("error getting accounts: {}", e))
+                })
+            .and_then(|c| {
+                get_github_user(&c.access_token)
+            }).map(|gh| GithubAuthMetadata{
+                username: gh.login
+            })
+            .map_err(|e| format!("{:?}", e))
+        };
+
+        Ok(UserResp {
+            uuid: user.uuid.simple().to_string(),
+            username: user.username,
+            role: user.role,
+            email: user.email,
+            groups: groups.iter().map(|g| g.into()).collect(),
+            auth_metadata: AuthMetadata{
+                github: Some(github_account),
+            },
+        })
+    }
+}
+
+
+#[derive(Debug, Serialize)]
+pub struct AuthMetadata {
+    pub github: Option<Result<GithubAuthMetadata, String>>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct GithubAuthMetadata {
+    pub username: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct GroupResp {
+    pub uuid: String,
+    pub name: String,
+    pub description: String,
+    pub public: bool,
+}
+
+impl<'a> From<&'a db::groups::Group> for GroupResp {
+    fn from(g: &'a db::groups::Group) -> Self {
+        GroupResp {
+            uuid: g.uuid.simple().to_string(),
+            name: g.name.clone(),
+            description: g.description.clone(),
+            public: g.public,
+        }
+    }
+}
+
+
+#[derive(Serialize)]
+#[serde(tag = "type")]
+pub enum AuthUserResp {
+    UserResp(UserResp),
+    PartialUser(PartialUser),
 }
 
 impl<'a, 'r> FromRequest<'a, 'r> for PartialUser {
@@ -234,7 +321,6 @@ impl<'a, 'r> FromRequest<'a, 'r> for OauthUser {
 
                 match User::from_uuid(&*db, uuid) {
                     Err(db::users::GetUserError::NoSuchUser) => {
-                        debug!("no such user for uuid: {}", uuid);
                         Err(Outcome::Failure((Status::NotFound, ())))
                     },
                     Err(e) => {

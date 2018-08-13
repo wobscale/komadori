@@ -30,6 +30,7 @@ extern crate serde;
 extern crate serde_derive;
 extern crate serde_json;
 
+mod provider;
 mod types;
 mod request_id;
 mod hydra;
@@ -84,12 +85,6 @@ fn main() {
     let rkt_config = rocket::config::Config::build(rocket::config::Environment::active().unwrap())
         .port(8081);
     let mut rkt = rocket::custom(rkt_config.finalize().unwrap(), true);
-
-    let base_url = if rkt.config().environment.is_dev() {
-        env::var("BASE_URL").unwrap_or(format!("http://127.0.0.1:{}", rkt.config().port))
-    } else {
-        env::var("BASE_URL").expect("Must set BASE_URL")
-    };
 
     if rkt.config().environment.is_dev() {
         rkt = rkt.attach(CORS());
