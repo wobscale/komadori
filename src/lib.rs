@@ -38,7 +38,6 @@ extern crate log;
 pub mod provider;
 mod request_id;
 mod hydra;
-mod schema;
 mod models;
 mod permissions;
 mod errors;
@@ -49,7 +48,7 @@ mod user_routes;
 mod oauth_routes;
 mod types;
 
-use provider::OauthProvider;
+use provider::{OauthProvider, ProviderSet};
 use rocket::http::Status;
 use rocket::{Request, Response};
 use rocket::fairing::{Fairing, Info, Kind};
@@ -73,6 +72,7 @@ pub struct HydraConfig {
 pub struct Config {
     pub pool: db::Pool,
     pub github_provider: Option<provider::github::Github>,
+    pub local_provider: Option<provider::local::Local>,
     pub base_url: String,
     pub hydra: HydraConfig,
     pub environment:  Environment,
@@ -83,7 +83,7 @@ pub fn rocket(config: Config) -> rocket::Rocket {
         Environment::Dev => rocket::config::Config::development(),
         Environment::Prod => rocket::config::Config::production(),
     }.unwrap();
-    let mut rkt = rocket::custom(rkt_conf, config.environment == Environment::Dev);
+    let rkt = rocket::custom(rkt_conf, config.environment == Environment::Dev);
 
     let hydra_builder = {
         hydra::client::ClientBuilder::new(
@@ -104,26 +104,23 @@ pub fn rocket(config: Config) -> rocket::Rocket {
 
     permissions::initialize_groups(&config.pool.get().unwrap()).unwrap();
 
-    if rkt.config().environment.is_dev() {
-        rkt = rkt.attach(CORS());
-        let p = config.github_provider.unwrap();
-        // TODO: no github in dev, github in prod and preprod?
-        rkt = rkt.mount("/", p.routes());
-        rkt = rkt.manage(p);
-    } else {
-        let p = config.github_provider.unwrap();
-        rkt = rkt.mount("/", p.routes());
-        rkt = rkt.manage(p);
-    }
+    let providers = ProviderSet{
+        github: config.github_provider,
+        local: config.local_provider,
+    };
+
+    let provider_routes = providers.routes();
 
     rkt
         .attach(request_id::RequestIDFairing)
         .manage(config.pool)
         .manage(hydra_builder)
+        .manage(providers)
         .mount("/", routes![healthz])
         .mount("/", user_routes::routes())
         .mount("/", admin_routes::routes())
         .mount("/", oauth_routes::routes())
+        .mount("/", provider_routes)
 }
 
 #[get("/healthz")]

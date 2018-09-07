@@ -21,6 +21,13 @@ table! {
 }
 
 table! {
+    local_accounts (id) {
+        id -> Int4,
+        user_id -> Int4,
+    }
+}
+
+table! {
     users (id) {
         id -> Int4,
         uuid -> Uuid,
@@ -41,12 +48,14 @@ table! {
 }
 
 joinable!(github_accounts -> users (user_id));
+joinable!(local_accounts -> users (user_id));
 joinable!(users_groups -> groups (group_id));
 joinable!(users_groups -> users (user_id));
 
 allow_tables_to_appear_in_same_query!(
     github_accounts,
     groups,
+    local_accounts,
     users,
     users_groups,
 );

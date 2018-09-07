@@ -34,7 +34,6 @@ mod provider;
 mod types;
 mod request_id;
 mod hydra;
-mod schema;
 mod oauth;
 mod models;
 mod permissions;

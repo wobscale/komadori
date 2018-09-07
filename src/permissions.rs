@@ -8,7 +8,7 @@ fn all_groups() -> Vec<NewGroup> {
 
 pub fn initialize_groups(db: &diesel::PgConnection) -> Result<(), String> {
     use diesel::prelude::*;
-    use schema::groups::dsl::*;
+    use db::schema::groups::dsl::*;
 
     for g in all_groups() {
         diesel::insert_into(groups)

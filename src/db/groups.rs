@@ -2,7 +2,7 @@ use db::users::User;
 use diesel;
 use diesel::prelude::*;
 use std::time::SystemTime;
-use schema::{groups, users, users_groups};
+use db::schema::{groups, users, users_groups};
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Queryable, Identifiable)]

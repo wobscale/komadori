@@ -42,8 +42,8 @@ class UserAPI {
     });
   }
 
-  static github_auth(provider, code, state) {
-    return fetch(`${config.api}/github/user/auth`, {
+  static githubAuth(provider, code, state) {
+    return fetch(`${config.api}/github/auth`, {
       mode: 'cors',
       headers: { 'content-type': 'application/json' },
       credentials: 'include',

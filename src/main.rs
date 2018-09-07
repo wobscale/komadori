@@ -73,11 +73,18 @@ fn main() {
         db::db_pool(uri).expect("error connecting to database")
     };
 
+    let local_provider = if env == Environment::Dev {
+        Some(provider::local::Local::new(base_url.clone()))
+    } else {
+        None
+    };
+
     rocket(komadori::Config{
         environment: env,
         base_url: base_url,
         hydra: hydra_conf,
         github_provider: Some(github_provider),
+        local_provider: local_provider,
         pool: pool,
     })
     .launch();

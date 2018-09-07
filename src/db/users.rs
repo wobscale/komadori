@@ -5,7 +5,7 @@ use diesel;
 use std::time::{SystemTime, Instant};
 use oauth;
 use uuid::Uuid;
-use schema::{users, groups, users_groups, github_accounts};
+use db::schema::{users, groups, users_groups, github_accounts, local_accounts};
 
 #[derive(Insertable)]
 #[table_name = "users"]
@@ -19,6 +19,12 @@ pub struct NewUser<'a> {
 pub struct NewGithubAccount<'a> {
     pub id: i32,
     pub access_token: &'a str,
+}
+
+#[derive(Insertable)]
+#[table_name = "local_accounts"]
+pub struct NewLocalAccount {
+    pub id: i32,
 }
 
 
@@ -53,13 +59,33 @@ impl<'a> NewUser<'a> {
         let create_res = (&*conn).transaction::<_, diesel::result::Error, _>(|| {
             use diesel;
             use diesel::prelude::*;
-            use schema::users::dsl::*;
-            use schema::github_accounts;
+            use db::schema::users::dsl::*;
+            use db::schema::github_accounts;
             let newuser: User = diesel::insert_into(users).values(&self)
                 .get_result(&*conn)?;
 
             diesel::insert_into(github_accounts::table)
                 .values((&gh, github_accounts::user_id.eq(newuser.id)))
+                .execute(&*conn)?;
+
+            Ok(newuser)
+        });
+        create_res
+    }
+
+    pub fn insert_local(self, conn: &diesel::PgConnection, local: NewLocalAccount) -> Result<User, diesel::result::Error> {
+        // TODO: error handling, e.g. detect client vs server errors (such as uniqueness constraints
+        // being client, and db conn errs being server)
+        let create_res = (&*conn).transaction::<_, diesel::result::Error, _>(|| {
+            use diesel;
+            use diesel::prelude::*;
+            use db::schema::users::dsl::*;
+            use db::schema::local_accounts;
+            let newuser: User = diesel::insert_into(users).values(&self)
+                .get_result(&*conn)?;
+
+            diesel::insert_into(local_accounts::table)
+                .values((&local, local_accounts::user_id.eq(newuser.id)))
                 .execute(&*conn)?;
 
             Ok(newuser)
@@ -72,7 +98,7 @@ impl<'a> NewUser<'a> {
 impl User {
     pub fn list(conn: &diesel::PgConnection) -> Result<Vec<Self>, GetUserError> {
         use diesel::prelude::*;
-        use schema::users::dsl::*;
+        use db::schema::users::dsl::*;
 
         match users.load::<User>(conn) {
             Ok(us) => Ok(us),
@@ -85,7 +111,7 @@ impl User {
 
     pub fn from_uuid(conn: &diesel::PgConnection, uuid_: Uuid) -> Result<Self, GetUserError> {
         use diesel::prelude::*;
-        use schema::users::dsl::*;
+        use db::schema::users::dsl::*;
         match users.filter(uuid.eq(uuid_)).limit(1).load::<User>(conn) {
             Ok(u) => match u.first() {
                 Some(u) => Ok(u.clone()),
@@ -107,21 +133,29 @@ impl User {
         provider_id: &i32,
     ) -> Result<Self, GetUserError> {
         // Compile-check that we can assume github's the only provider
-        match provider {
-            oauth::Provider::Github => (),
-        };
+        use db::schema::github_accounts;
+        use db::schema::local_accounts;
 
         use diesel::prelude::*;
-        use schema::github_accounts;
-        use schema::users::dsl::*;
+        use db::schema::users::dsl::*;
         match {
             let timer = Instant::now();
-            let res = users
-                .inner_join(github_accounts::table)
-                .select(users::all_columns())
-                .filter(github_accounts::id.eq(provider_id))
-                .limit(1)
-                .load::<User>(conn);
+            let res = match provider {
+                oauth::Provider::Github => {
+                    users
+                        .inner_join(github_accounts::table)
+                        .select(users::all_columns())
+                        .filter(github_accounts::id.eq(provider_id))
+                        .load::<User>(conn)
+                }
+                oauth::Provider::Local => {
+                    users
+                        .inner_join(local_accounts::table)
+                        .select(users::all_columns())
+                        .filter(local_accounts::id.eq(provider_id))
+                        .load::<User>(conn)
+                }
+            };
             debug!(
                 "Partial user to user query took {}",
                 (timer.elapsed().as_secs() as f64 + timer.elapsed().subsec_nanos() as f64 * 1e-9)

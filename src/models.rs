@@ -1,4 +1,4 @@
-use schema::*;
+use db::schema::*;
 use uuid::Uuid;
 
 #[derive(Insertable)]

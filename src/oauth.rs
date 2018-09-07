@@ -20,12 +20,14 @@ pub struct Token {
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub enum Provider {
     Github,
+    Local,
 }
 
 impl ToString for Provider {
     fn to_string(&self) -> String {
         match *self {
             Provider::Github => "Github".to_owned(),
+            Provider::Local => "local".to_owned(),
         }
     }
 }

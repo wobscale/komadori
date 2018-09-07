@@ -1,16 +1,18 @@
 use db;
-use types::{CookieUser, PartialUser, UserResp, AuthMetadata, GithubAuthMetadata};
+use types::{User, CookieUser, PartialUser, UserResp, AuthMetadata, GithubAuthMetadata,AuthUserResp};
 use provider::github::get_github_user;
 use oauth;
 use diesel;
+use rocket::State;
 use diesel::result::Error as DieselErr;
 use rocket;
 use rocket_contrib::json::Json;
 use rocket::http::{Cookie, Cookies};
 use errors::Error;
+use provider::{ProviderSet, ProviderAuthRequest};
 
 pub fn routes() -> Vec<rocket::Route> {
-    routes![create_user, logout_user, get_user]
+    routes![auth_user, create_user, logout_user, get_user]
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -71,6 +73,12 @@ pub fn create_user(
         }.insert_github(&*conn, db::users::NewGithubAccount{
             id: req.partial_user.provider_id,
             access_token: &req.partial_user.access_token,
+        }),
+        oauth::Provider::Local => db::users::NewUser{
+            username: &req.username,
+            email: &req.email,
+        }.insert_local(&*conn, db::users::NewLocalAccount{
+            id: req.partial_user.provider_id,
         })
     };
 
@@ -127,4 +135,31 @@ pub fn logout_user(mut cookies: Cookies) -> Json<UserLogoutResponse> {
     cookies.remove_private(Cookie::named("oauth_token"));
     cookies.remove_private(Cookie::named("user_uuid"));
     Json(UserLogoutResponse {})
+}
+
+#[post("/user/auth", format = "application/json", data = "<req>")]
+pub fn auth_user(mut cookies: Cookies, conn: db::Conn, providers: State<ProviderSet>, req: Json<ProviderAuthRequest>) -> Json<Result<AuthUserResp, Error>> {
+    let pu = match providers.partial_user(&*req) {
+        Ok(pu) => pu,
+        Err(e) => { return Json(Err(e)) },
+    };
+
+    let user = match User::from_oauth_provider(&conn, &pu.provider, &pu.provider_id) {
+        Ok(u) => {
+            cookies.add_private(Cookie::new(
+                "user_uuid".to_owned(),
+                u.uuid.simple().to_string(),
+            ));
+            u
+        }
+        Err(e) => {
+            debug!("error getting user from partial user; assuming user doesn't exist: {:?}", e);
+            // TODO: better error handling for client vs server errs
+            return Json(Ok(AuthUserResp::PartialUser(pu)));
+        }
+    };
+    match UserResp::new(user, &conn) {
+        Err(e) => Json(Err(e)),
+        Ok(u) => Json(Ok(AuthUserResp::UserResp(u))),
+    }
 }

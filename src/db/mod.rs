@@ -1,5 +1,7 @@
 pub mod users;
 pub mod groups;
+// TODO: shouldn't be pub, all db interactions should go through this module directly
+pub mod schema;
 
 use diesel::PgConnection;
 use r2d2;

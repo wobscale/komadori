@@ -26,7 +26,7 @@ pub struct PartialUser {
 
 #[derive(Debug, Serialize)]
 pub struct UserResp {
-   pub uuid: String,
+    pub uuid: String,
     pub username: String,
     pub role: Option<String>,
     pub email: String,
@@ -112,7 +112,6 @@ pub enum AuthUserResp {
 impl<'a, 'r> FromRequest<'a, 'r> for PartialUser {
     type Error = ();
 
-
     fn from_request(request: &'a Request<'r>) -> rocket::request::Outcome<Self, ()> {
         let token = match oauth::SerializableToken::from_request(request) {
             Outcome::Success(token) => token,
@@ -157,6 +156,7 @@ impl<'a, 'r> FromRequest<'a, 'r> for PartialUser {
                 };
                 (user.id, user.login)
             }
+            oauth::Provider::Local => unimplemented!(),
         };
         Outcome::Success(PartialUser {
             provider: token.provider,
@@ -219,7 +219,7 @@ impl<'a, 'r> FromRequest<'a, 'r> for CookieUser {
                                 u.uuid
                             }
                             Err(e) => {
-                                error!("could not create partial user from partial user: {:?}", e);
+                                error!("could not create user from partial user: {:?}", e);
                                 return Outcome::Failure((Status::InternalServerError, ()));
                             }
                         }
