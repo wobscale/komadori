@@ -1,10 +1,16 @@
 use rocket;
 use oauth2::Config;
+use rocket_contrib::Json;
+use rocket::State;
 use types::PartialUser;
 use errors::Error;
 
 pub mod github;
 pub mod local;
+
+pub fn routes() -> Vec<rocket::Route> {
+    routes![list_providers]
+}
 
 // Since there are a known number of implementers of OauthProvider, we can just create a poor-man's
 // set by storing each as an optional field.
@@ -54,6 +60,19 @@ impl ProviderSet {
 
         ret
     }
+}
+
+#[get("/login/providers")]
+fn list_providers(providers: State<ProviderSet>) -> Json<Vec<&'static str>> {
+    let mut res = Vec::new();
+    if providers.github.is_some() {
+        res.push("github");
+    }
+    if providers.local.is_some() {
+        res.push("local");
+    }
+
+    Json(res)
 }
 
 #[derive(Deserialize)]

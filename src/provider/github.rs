@@ -1,7 +1,7 @@
 use github_rs::client::{Github as GHClient, Executor};
 use oauth2::Config;
 use rocket_contrib::json::Json;
-use super::{OauthProvider, OauthData};
+use super::{OauthProvider, OauthData, ProviderSet};
 use rand::{thread_rng, Rng};
 use oauth;
 use rocket::http::{Cookie, Cookies};
@@ -78,8 +78,13 @@ impl OauthProvider for Github {
 }
 
 #[get("/github/authorize_url")]
-pub fn github_route(mut cookies: Cookies, provider: State<Github>) -> Result<String, String> {
-    let provider = provider.inner();
+pub fn github_route(mut cookies: Cookies, provider: State<ProviderSet>) -> Result<String, String> {
+    let provider = match &provider.github {
+        Some(p) => p,
+        None => {
+            return Err("Provider not configured".to_string());
+        }
+    };
     let state: String = thread_rng().gen_ascii_chars().take(16).collect();
     cookies.add_private(Cookie::new("github_state".to_owned(), state.clone()));
     let oauth_url = provider.config().set_state(state).authorize_url().to_string();
@@ -92,9 +97,15 @@ pub fn github_route(mut cookies: Cookies, provider: State<Github>) -> Result<Str
 pub fn auth_user(
     conn: db::Conn,
     oauth_data: Json<OauthData>,
-    github: State<Github>,
+    provider: State<ProviderSet>,
     mut cookies: Cookies,
 ) -> Json<Result<types::AuthUserResp, Error>> {
+    let github = match &provider.github {
+        Some(p) => p,
+        None => {
+            return Json(Err(Error::client_error("Provider not configured".to_string())));
+        }
+    };
         // We got github oauth tokens, exchange it for an access code
         let token = match github.config().exchange_code(oauth_data.code.clone()) {
             Ok(t) => t,

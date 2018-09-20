@@ -75,7 +75,7 @@ pub struct Config {
     pub local_provider: Option<provider::local::Local>,
     pub base_url: String,
     pub hydra: HydraConfig,
-    pub environment:  Environment,
+    pub environment: Environment,
 }
 
 pub fn rocket(config: Config) -> rocket::Rocket {
@@ -83,7 +83,10 @@ pub fn rocket(config: Config) -> rocket::Rocket {
         Environment::Dev => rocket::config::Config::development(),
         Environment::Prod => rocket::config::Config::production(),
     }.unwrap();
-    let rkt = rocket::custom(rkt_conf, config.environment == Environment::Dev);
+    let mut rkt = rocket::custom(rkt_conf, config.environment == Environment::Dev);
+    if config.environment == Environment::Dev {
+        rkt = rkt.attach(CORS{});
+    }
 
     let hydra_builder = {
         hydra::client::ClientBuilder::new(
@@ -120,6 +123,7 @@ pub fn rocket(config: Config) -> rocket::Rocket {
         .mount("/", user_routes::routes())
         .mount("/", admin_routes::routes())
         .mount("/", oauth_routes::routes())
+        .mount("/", provider::routes())
         .mount("/", provider_routes)
 }
 
