@@ -51,6 +51,10 @@ class ReactApp extends Component {
             component={GithubLogin}
           />
           <Route
+            path="/dev/login"
+            component={DevLogin}
+          />
+          <Route
             path="/account/create"
             component={CreateAccount}
           />

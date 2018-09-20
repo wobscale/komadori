@@ -89,7 +89,6 @@ function handleConsentState(state = {
   }
 }
 
-
 const rootReducer = combineReducers({
   user: handleUserState,
   consent: handleConsentState,
