@@ -32,7 +32,7 @@ impl ToString for Provider {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct SerializableToken {
     pub provider: Provider,
     #[serde(with = "Token")] pub token: oauth2::Token,

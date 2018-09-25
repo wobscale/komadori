@@ -35,7 +35,7 @@ impl ProviderSet {
                 let local = match &self.local {
                     Some(p) => p,
                     None => {
-                        return Err(Error::server_error("provider Github not configured".to_string()));
+                        return Err(Error::server_error("provider local not configured".to_string()));
                     }
                 };
                 local.partial_user(data)

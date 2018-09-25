@@ -22,19 +22,6 @@ pub struct CreateUserRequest {
     email: String,
 }
 
-#[derive(Debug, Deserialize)]
-pub struct GithubLoginRequest {
-    code: String,
-    state: String,
-}
-
-#[derive(Deserialize)]
-#[serde(tag = "provider")]
-pub enum AuthUserRequest {
-    #[serde(rename = "github")]
-    Github(GithubLoginRequest),
-}
-
 #[get("/user", format = "application/json")]
 pub fn get_user(user: CookieUser, conn: db::Conn) -> Result<Json<UserResp>, Json<Error>> {
     let user = user.0;
@@ -61,19 +48,27 @@ pub fn create_user(
         )));
     }
 
-    let gh = match get_github_user(&req.partial_user.access_token) {
-        Ok(u) => u,
-        Err(e) => return Json(Err(e)),
+    let mut auth_meta = AuthMetadata{
+        github: None,
     };
 
     let create_res = match req.partial_user.provider {
-        oauth::Provider::Github => db::users::NewUser{
-            username: &req.username,
-            email: &req.email,
-        }.insert_github(&*conn, db::users::NewGithubAccount{
-            id: req.partial_user.provider_id,
-            access_token: &req.partial_user.access_token,
-        }),
+        oauth::Provider::Github => {
+            let gh = match get_github_user(&req.partial_user.access_token) {
+                Ok(u) => u,
+                Err(e) => return Json(Err(e)),
+            };
+            auth_meta.github = Some(Ok(GithubAuthMetadata{
+                username: gh.login,
+            }));
+            db::users::NewUser{
+                username: &req.username,
+                email: &req.email,
+            }.insert_github(&*conn, db::users::NewGithubAccount{
+                id: req.partial_user.provider_id,
+                access_token: &req.partial_user.access_token,
+            })
+        }
         oauth::Provider::Local => db::users::NewUser{
             username: &req.username,
             email: &req.email,
@@ -117,11 +112,7 @@ pub fn create_user(
                 role: None,
                 uuid: newuser.uuid.simple().to_string(),
                 groups: vec![],
-                auth_metadata: AuthMetadata{
-                    github: Some(Ok(GithubAuthMetadata{
-                        username: gh.login,
-                    })),
-                },
+                auth_metadata: auth_meta,
             }))
         }
     }
