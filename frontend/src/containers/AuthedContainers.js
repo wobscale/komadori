@@ -2,6 +2,7 @@ import { connectedRouterRedirect } from 'redux-auth-wrapper/history4/redirect';
 import locationHelperBuilder from 'redux-auth-wrapper/history4/locationHelper';
 import OldLoginPage from './LoginContainer';
 import OldGithubLogin from './LoginWithGithubContainer';
+import OldDevLogin from './LoginWithDevContainer';
 import OldUserConsent from './ConsentContainer';
 import OldCreateAccount from './CreateAccount';
 import OldUserDashboard from './UserDashboardContainer';
@@ -59,6 +60,7 @@ export const Login = userIsNotAuthenticated(OldLoginPage);
 export const CreateAccount = userIsNotAuthenticated(OldCreateAccount);
 
 export const GithubLogin = userIsNotAuthenticated(userIsNotPartial(OldGithubLogin));
+export const DevLogin = userIsNotAuthenticated(userIsNotPartial(OldDevLogin));
 
 export const UserDashboard = userIsAuthenticated(OldUserDashboard);
 export const NavWrapper = userIsAuthenticated(OldNavWrapper);

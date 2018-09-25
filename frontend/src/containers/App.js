@@ -9,9 +9,8 @@ import { connect } from 'react-redux';
 import { doGetUser } from '../actions';
 import GithubOauthWindow from '../github-oauth-window';
 import {
-  Login, CreateAccount, GithubLogin,
-  UserDashboard, UserConsent,
-  NavWrapper, BootstrapAdmin,
+  Login, CreateAccount, DevLogin, GithubLogin,
+  UserConsent, NavWrapper, BootstrapAdmin,
 } from './AuthedContainers';
 
 class ReactApp extends Component {

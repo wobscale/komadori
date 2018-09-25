@@ -137,7 +137,8 @@ export function doHandleAuth(provider, providerInfo) {
   return (dispatch) => {
     switch (provider) {
       case 'github':
-        UserApi.githubAuth(provider, providerInfo.code, providerInfo.state)
+      case 'local':
+        UserApi.userAuth(provider, providerInfo.code, providerInfo.state)
           .then((resp) => {
             if (resp.type === 'PartialUser') {
               // Needs to create an account
@@ -147,7 +148,7 @@ export function doHandleAuth(provider, providerInfo) {
             }
           })
           .catch((e) => {
-            console.error(e);
+            console.error('error making handle auth request', e);
           });
         break;
       default:
