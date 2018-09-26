@@ -20,10 +20,14 @@ lazy_static! {
         .collect();
 }
 
+// only needed for tests
+pub(crate) fn bootstrap_token() -> String {
+    (*BOOTSTRAP_TOKEN).clone()
+}
 
 pub fn routes() -> Vec<rocket::Route> {
     // Error level so it's always visible
-    error!("admin bootstrap token: {}", *BOOTSTRAP_TOKEN);
+    error!("admin bootstrap token: {}", bootstrap_token());
     routes![bootstrap_admin, list_users]
 }
 

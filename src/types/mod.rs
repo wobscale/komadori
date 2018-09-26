@@ -24,7 +24,7 @@ pub struct PartialUser {
     pub access_token: String,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct UserResp {
     pub uuid: String,
     pub username: String,
@@ -72,17 +72,17 @@ impl UserResp {
 }
 
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct AuthMetadata {
     pub github: Option<Result<GithubAuthMetadata, String>>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct GithubAuthMetadata {
     pub username: String,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct GroupResp {
     pub uuid: String,
     pub name: String,
@@ -102,7 +102,7 @@ impl<'a> From<&'a db::groups::Group> for GroupResp {
 }
 
 
-#[derive(Serialize)]
+#[derive(Debug, Deserialize, Serialize)]
 #[serde(tag = "type")]
 pub enum AuthUserResp {
     UserResp(UserResp),
@@ -341,5 +341,12 @@ impl<'a, 'r> FromRequest<'a, 'r> for OauthUser {
             }
         }
     }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CreateUserRequest {
+    pub partial_user: PartialUser,
+    pub username: String,
+    pub email: String,
 }
 

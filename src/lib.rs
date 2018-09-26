@@ -46,7 +46,7 @@ pub mod oauth;
 mod admin_routes;
 mod user_routes;
 mod oauth_routes;
-mod types;
+pub mod types;
 
 use provider::ProviderSet;
 use rocket::http::Status;

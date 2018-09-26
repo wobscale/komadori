@@ -1,5 +1,5 @@
 use db;
-use types::{User, CookieUser, PartialUser, UserResp, AuthMetadata, GithubAuthMetadata,AuthUserResp};
+use types::{User, CookieUser, CreateUserRequest, UserResp, AuthMetadata, GithubAuthMetadata,AuthUserResp};
 use provider::github::get_github_user;
 use oauth;
 use diesel;
@@ -13,13 +13,6 @@ use provider::{ProviderSet, ProviderAuthRequest};
 
 pub fn routes() -> Vec<rocket::Route> {
     routes![auth_user, create_user, logout_user, get_user]
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct CreateUserRequest {
-    partial_user: PartialUser,
-    username: String,
-    email: String,
 }
 
 #[get("/user", format = "application/json")]

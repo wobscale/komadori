@@ -74,7 +74,7 @@ fn list_providers(providers: State<ProviderSet>) -> Json<Vec<&'static str>> {
     Json(res)
 }
 
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 #[serde(tag = "provider")]
 pub enum ProviderAuthRequest {
     #[serde(rename = "github")]
@@ -87,8 +87,8 @@ pub trait OauthProvider {
     fn routes(&self) -> Vec<rocket::Route>;
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct OauthData {
-    code: String,
-    state: String,
+    pub code: String,
+    pub state: String,
 }
