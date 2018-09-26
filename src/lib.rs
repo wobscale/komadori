@@ -48,7 +48,7 @@ mod user_routes;
 mod oauth_routes;
 mod types;
 
-use provider::{OauthProvider, ProviderSet};
+use provider::ProviderSet;
 use rocket::http::Status;
 use rocket::{Request, Response};
 use rocket::fairing::{Fairing, Info, Kind};

@@ -4,15 +4,10 @@
 // It should *NEVER* be used in production.
 
 use super::{OauthData, OauthProvider};
-use db;
 use errors::Error;
 use oauth;
 use oauth2::Config;
 use rocket;
-use rocket::http::{Cookie, Cookies};
-use rocket::State;
-use rocket_contrib::json::Json;
-use std::collections::HashMap;
 use types;
 
 #[derive(Debug, Clone)]
@@ -55,34 +50,8 @@ impl OauthProvider for Local {
     }
 
     fn routes(&self) -> Vec<rocket::Route> {
-        routes![local_authorize_url, local_auth]
+        routes![]
     }
-}
-
-#[get("/dev/local/authorize_url")]
-pub fn local_authorize_url(mut cookies: Cookies, provider: State<Local>) -> Result<String, String> {
-    let provider = provider.inner();
-    let oauth_url = provider
-        .config()
-        .set_state("insecure-state".to_string())
-        .authorize_url()
-        .to_string();
-
-    Ok(oauth_url)
-}
-
-#[get("/dev/local/auth")]
-pub fn local_auth(mut cookies: Cookies, provider: State<Local>) -> Result<String, String> {
-    let provider = provider.inner();
-    let state: String = "insecure-state".to_string();
-    cookies.add_private(Cookie::new("insecure_state".to_owned(), state.clone()));
-    let oauth_url = provider
-        .config()
-        .set_state(state)
-        .authorize_url()
-        .to_string();
-
-    Ok(oauth_url)
 }
 
 #[derive(Deserialize)]
