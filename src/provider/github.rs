@@ -52,9 +52,7 @@ impl Github {
             access_token: token.access_token,
         })
     }
-}
 
-impl OauthProvider for Github {
     fn config(&self) -> Config {
         let redir_url = format!(
             "{}/{}",
@@ -70,6 +68,9 @@ impl OauthProvider for Github {
             .set_redirect_url(redir_url)
     }
 
+}
+
+impl OauthProvider for Github {
     fn routes(&self) -> Vec<rocket::Route> {
         routes![authorize_url]
     }

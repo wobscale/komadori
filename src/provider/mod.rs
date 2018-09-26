@@ -1,5 +1,4 @@
 use rocket;
-use oauth2::Config;
 use rocket_contrib::Json;
 use rocket::State;
 use types::PartialUser;
@@ -85,7 +84,6 @@ pub enum ProviderAuthRequest {
 }
 
 pub trait OauthProvider {
-    fn config(&self) -> Config;
     fn routes(&self) -> Vec<rocket::Route>;
 }
 

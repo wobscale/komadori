@@ -74,7 +74,7 @@ fn main() {
     };
 
     let local_provider = if env == Environment::Dev {
-        Some(provider::local::Local::new(base_url.clone()))
+        Some(provider::local::Local::new())
     } else {
         None
     };
