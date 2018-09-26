@@ -18,6 +18,7 @@ pub struct Token {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+#[serde(rename_all = "camelCase")]
 pub enum Provider {
     Github,
     Local,
