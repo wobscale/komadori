@@ -1,6 +1,8 @@
 use rocket::{Request, Response};
 use rocket;
+use serde::Serialize;
 use rocket::http::Status;
+use rocket_contrib::json::Json;
 use std::io::Cursor;
 use serde_json;
 
@@ -46,3 +48,35 @@ pub struct StatusDef {
     pub code: u16,
     pub reason: &'static str,
 }
+
+
+
+pub enum JsonResult<T> {
+    Ok(T),
+    Err(Error),
+}
+
+impl<T> From<Result<T, Error>> for JsonResult<T> {
+    fn from(other: Result<T, Error>) -> Self {
+        match other {
+            Ok(t) => JsonResult::Ok(t),
+            Err(e) => JsonResult::Err(e),
+        }
+    }
+}
+
+impl<'r, T> rocket::response::Responder<'r> for JsonResult<T>
+    where T: Serialize
+{
+        fn respond_to(self, req: &Request) -> rocket::response::Result<'r> {
+            match self {
+                JsonResult::Ok(t) => {
+                    Json(t).respond_to(req)
+                },
+                JsonResult::Err(e) => {
+                    e.respond_to(req)
+                }
+            }
+        }
+}
+

@@ -342,3 +342,4 @@ impl<'a, 'r> FromRequest<'a, 'r> for OauthUser {
         }
     }
 }
+

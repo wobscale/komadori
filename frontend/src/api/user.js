@@ -81,13 +81,14 @@ class UserAPI {
       }),
     }).then((resp) => {
       if (!resp.ok) {
+        // TODO: should still try to resp.json and return the json.message bit.
         throw new Error(`could not create user: ${resp.status}`);
       }
       return resp.json().then((respJson) => {
-        if (respJson.Ok && respJson.Ok.uuid) {
-          return respJson.Ok;
+        if (respJson && respJson.uuid) {
+          return respJson;
         }
-        throw new Error(`could not create user: ${respJson.Err}`);
+        throw new Error(`malformed json: ${respJson}`);
       });
     });
   }
