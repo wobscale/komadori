@@ -152,7 +152,7 @@ export function doHandleAuth(provider, providerInfo) {
           });
         break;
       default:
-        alert('Provider not recognized in handle auth; pls file a bug complaining about this')
+        alert('Provider not recognized in handle auth; pls file a bug complaining about this');
     }
   };
 }

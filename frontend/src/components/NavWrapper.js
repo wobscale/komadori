@@ -7,7 +7,7 @@ import userUtil from '../util/user';
 import UserDashboard from '../containers/UserDashboardContainer';
 import AdminManageUsers from '../containers/AdminManageUsers';
 
-const NavWrapper = ({ user, match }) => (
+const NavWrapper = ({ user }) => (
   <div className="wrapper">
     <Topbar user={user} />
     <div className="main-content">
@@ -38,7 +38,6 @@ const NavWrapper = ({ user, match }) => (
   </div>
 );
 NavWrapper.propTypes = {
-  match: PropTypes.object.isRequired,
   user: PropTypes.object.isRequired,
 };
 
