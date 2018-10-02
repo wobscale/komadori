@@ -23,13 +23,9 @@ pub struct CreateUserRequest {
 }
 
 #[get("/user", format = "application/json")]
-pub fn get_user(user: CookieUser, conn: db::Conn) -> Result<Json<UserResp>, Json<Error>> {
-    let user = user.0;
-    UserResp::new(user, &conn)
-        .map(|r| {
-            Json(r)
-        })
-        .map_err(|e| Json(e))
+pub fn get_user(user: CookieUser, conn: db::Conn) -> JsonResult<UserResp> {
+    UserResp::new(user.0, &conn)
+        .into()
 }
 
 
@@ -122,17 +118,17 @@ pub fn create_user(
 pub struct UserLogoutResponse {}
 
 #[get("/user/logout")]
-pub fn logout_user(mut cookies: Cookies) -> Json<UserLogoutResponse> {
+pub fn logout_user(mut cookies: Cookies) -> JsonResult<UserLogoutResponse> {
     cookies.remove_private(Cookie::named("oauth_token"));
     cookies.remove_private(Cookie::named("user_uuid"));
-    Json(UserLogoutResponse {})
+    Ok(UserLogoutResponse {}).into()
 }
 
 #[post("/user/auth", format = "application/json", data = "<req>")]
-pub fn auth_user(mut cookies: Cookies, conn: db::Conn, providers: State<ProviderSet>, req: Json<ProviderAuthRequest>) -> Json<Result<AuthUserResp, Error>> {
+pub fn auth_user(mut cookies: Cookies, conn: db::Conn, providers: State<ProviderSet>, req: Json<ProviderAuthRequest>) -> JsonResult<AuthUserResp> {
     let pu = match providers.partial_user(&*req) {
         Ok(pu) => pu,
-        Err(e) => { return Json(Err(e)) },
+        Err(e) => { return Err(e).into() },
     };
 
     let user = match User::from_oauth_provider(&conn, &pu.provider, &pu.provider_id) {
@@ -146,11 +142,11 @@ pub fn auth_user(mut cookies: Cookies, conn: db::Conn, providers: State<Provider
         Err(e) => {
             debug!("error getting user from partial user; assuming user doesn't exist: {:?}", e);
             // TODO: better error handling for client vs server errs
-            return Json(Ok(AuthUserResp::PartialUser(pu)));
+            return Ok(AuthUserResp::PartialUser(pu)).into();
         }
     };
     match UserResp::new(user, &conn) {
-        Err(e) => Json(Err(e)),
-        Ok(u) => Json(Ok(AuthUserResp::UserResp(u))),
-    }
+        Err(e) => Err(e),
+        Ok(u) => Ok(AuthUserResp::UserResp(u)),
+    }.into()
 }

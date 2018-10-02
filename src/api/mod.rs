@@ -1,7 +1,6 @@
 use rocket;
-use rocket_contrib::json::Json;
 use types::OauthUser;
-use errors::Error;
+use errors::{Error, JsonResult};
 use uuid::Uuid;
 use db;
 
@@ -15,16 +14,21 @@ pub struct MembershipResp {
 }
 
 #[get("/group/<guid>/membership", format = "application/json")]
-pub fn group_contains_user(user: OauthUser, conn: db::Conn, guid: String) -> Result<Json<MembershipResp>, Json<Error>> {
-    let guid = Uuid::parse_str(&guid).map_err(|_| Json(Error::client_error("invalid guid format".to_owned())))?;
+pub fn group_contains_user(user: OauthUser, conn: db::Conn, guid: String) -> JsonResult<MembershipResp> {
+    let guid = match Uuid::parse_str(&guid).map_err(|_| Error::client_error("invalid guid format".to_owned())) {
+        Err(e) => {
+            return Err(e).into();
+        }
+        Ok(g) => g,
+    };
     if !user.scopes.contains(&"group:check_membership".to_owned()) {
-        return Err(Json(Error::client_error("permission denied; insufficient scopes".to_owned())));
+        return Err(Error::client_error("permission denied; insufficient scopes".to_owned())).into();
     }
 
     let mut groups = match user.user.groups(&conn) {
         Err(e) => {
             warn!("err getting user groups: {}", e);
-            return Err(Json(Error::server_error("error getting groups".to_owned())));
+            return Err(Error::server_error("error getting groups".to_owned())).into();
         },
         Ok(g) => {
             g
@@ -32,7 +36,7 @@ pub fn group_contains_user(user: OauthUser, conn: db::Conn, guid: String) -> Res
     };
 
     groups.retain(|g| g.uuid == guid);
-    Ok(Json(MembershipResp{
+    Ok(MembershipResp{
         member: groups.len() > 0
-    }))
+    }).into()
 }

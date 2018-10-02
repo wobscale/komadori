@@ -8,7 +8,7 @@ use rocket::http::Status;
 use rocket::request::{FromRequest, Request};
 use rocket_contrib::json::Json;
 
-use errors::Error;
+use errors::{Error, JsonResult};
 use permissions;
 use types::UserResp;
 use types::CookieUser;
@@ -42,17 +42,17 @@ pub fn bootstrap_admin(
     conn: db::Conn,
     user: CookieUser,
     req: Json<BootstrapAdminReq>,
-) -> Result<Json<()>, Json<Error>> {
+) -> JsonResult<()> {
     let user = user.0;
     if !constant_time_eq::constant_time_eq(req.token.as_bytes(), (*BOOTSTRAP_TOKEN).as_bytes()) {
-        return Err(Json(Error::client_error("invalid bootstrap token".to_string())));
+        return Err(Error::client_error("invalid bootstrap token".to_string())).into();
     }
 
     user.add_group(conn, permissions::admin_group().uuid)
         .map_err(|e| {
-            Json(Error::server_error(format!("error adding to group: {}", e)))
-        })?;
-    Ok(Json(()))
+            Error::server_error(format!("error adding to group: {}", e))
+        })
+        .map(|_| ()).into()
 }
 
 #[derive(Serialize)]
@@ -64,7 +64,7 @@ pub struct ListUsersResp {
 pub fn list_users(
     conn: db::Conn,
     _admin: Admin,
-) -> Result<Json<ListUsersResp>, Json<Error>> {
+) -> JsonResult<ListUsersResp> {
     match db::users::User::list(&conn) {
         Ok(us) => {
             let resp = us.into_iter().map(|u| {
@@ -72,14 +72,14 @@ pub fn list_users(
             }).collect::<Result<Vec<_>, _>>();
 
             match resp {
-                Ok(resp) => Ok(Json(ListUsersResp{users: resp})),
-                Err(e) => Err(Json(Error::server_error(format!("error listing users: {:?}", e)))),
+                Ok(resp) => Ok(ListUsersResp{users: resp}),
+                Err(e) => Err(Error::server_error(format!("error listing users: {:?}", e))),
             }
         }
         Err(e) => {
-            Err(Json(Error::server_error(format!("error listing users: {:?}", e))))
+            Err(Error::server_error(format!("error listing users: {:?}", e)))
         }
-    }
+    }.into()
 }
 
 pub struct Admin(CookieUser);
