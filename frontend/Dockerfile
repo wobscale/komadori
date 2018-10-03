@@ -4,7 +4,7 @@ RUN mkdir /usr/src/app
 WORKDIR /usr/src/app
 COPY . /usr/src/app
 RUN npm install --silent
-RUN npm run build
+RUN npm run build-css && npm run build
 
 # nginx:latest @ 2018-10-02
 FROM nginx@sha256:11068617e2c38175c444c9e4b52294483dfebd4b8015a3ed815528687b2ab1ec
