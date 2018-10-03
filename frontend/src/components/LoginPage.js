@@ -5,7 +5,7 @@ import logo from '../logo.svg';
 
 const LoginPage = (props) => {
   const loginLinks = props.providers.map(p => (
-    <Link to={{ pathname: p.pathname, search: props.location.search }}>
+    <Link key={p.name} to={{ pathname: p.pathname, search: props.location.search }}>
       <button type="button">
         Login with {p.name}
       </button>

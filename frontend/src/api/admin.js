@@ -16,7 +16,7 @@ class AdminAPI {
       }
       return resp.json();
     }).then((resp) => {
-      if (resp.Ok) {
+      if (resp) {
         return {};
       } else if (resp.status) {
         throw new Error(`Error status: ${resp.message}`);

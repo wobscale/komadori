@@ -59,8 +59,8 @@ class UserAPI {
         throw new Error(`auth error: ${resp.status}`);
       }
       return resp.json().then((authRes) => {
-        if (authRes.Ok) {
-          return authRes.Ok;
+        if (authRes) {
+          return authRes;
         }
 
         throw new Error('Response did not include a user or partial user.');
