@@ -32,6 +32,20 @@ services:
     networks:
     - default
     - internal
+  komadori_api:
+    restart: always
+    entrypoint: ["/usr/src/komadori/target/debug/backend"]
+    ports:
+    - 8081:8081
+    env_file:
+    - ./hack/compose/komadori_env
+    - ./hack/compose/komadori_secrets
+    build: 
+      context: .
+      dockerfile: ./Dockerfile.dev
+    networks:
+    - default
+    - internal
   db:
     image: postgres
     env_file: ./hack/compose/db_env
@@ -41,8 +55,6 @@ services:
     - internal
   hydra:
     image: oryd/hydra:v0.11.12-alpine
-    ports:
-    - 4444:4444
     env_file: ./hack/compose/hydra_env
     entrypoint: /hack/compose/hydra-init.sh
     command: host --dangerous-force-http

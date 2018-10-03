@@ -79,10 +79,14 @@ pub struct Config {
 }
 
 pub fn rocket(config: Config) -> rocket::Rocket {
-    let rkt_conf = match config.environment {
+    let mut rkt_conf = match config.environment {
         Environment::Dev => rocket::config::Config::development(),
         Environment::Prod => rocket::config::Config::production(),
     }.unwrap();
+    if let Ok(address) = std::env::var("ROCKET_ADDRESS") {
+        rkt_conf.address = address;
+    }
+
     let mut rkt = rocket::custom(rkt_conf, config.environment == Environment::Dev);
     if config.environment == Environment::Dev {
         rkt = rkt.attach(CORS{});
