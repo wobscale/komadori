@@ -75,21 +75,21 @@ class CreateAccountReact extends Component {
               <form onSubmit={this.handleCreate}>
                 <label htmlFor="username">
                     Username:
-                    <input
-                      type="text"
-                      onChange={this.handleInputChange}
-                      name="username"
-                    />
+                  <input
+                    type="text"
+                    onChange={this.handleInputChange}
+                    name="username"
+                  />
                 </label>
                 <br />
 
                 <label htmlFor="email">
                     Email:
-                    <input
-                      type="text"
-                      onChange={this.handleInputChange}
-                      name="email"
-                    />
+                  <input
+                    type="text"
+                    onChange={this.handleInputChange}
+                    name="email"
+                  />
                 </label>
                 <br />
 

@@ -17,14 +17,11 @@ class UserAPI {
         };
       }
       return resp.json().then((user) => {
-        if (user.Ok) {
+        if (user) {
           return {
             loggedIn: true,
-            user: user.Ok,
+            user,
           };
-        }
-        if (user.Err) {
-          throw new Error('api error: ', user.Err);
         }
         throw new Error('error: api gave back invalid json: ', user);
       });
@@ -45,7 +42,7 @@ class UserAPI {
     });
   }
 
-  static auth(provider, code, state) {
+  static userAuth(provider, code, state) {
     return fetch(`${config.api}/user/auth`, {
       mode: 'cors',
       headers: { 'content-type': 'application/json' },
@@ -62,8 +59,8 @@ class UserAPI {
         throw new Error(`auth error: ${resp.status}`);
       }
       return resp.json().then((authRes) => {
-        if (authRes.Ok) {
-          return authRes.Ok;
+        if (authRes) {
+          return authRes;
         }
 
         throw new Error('Response did not include a user or partial user.');
@@ -84,13 +81,14 @@ class UserAPI {
       }),
     }).then((resp) => {
       if (!resp.ok) {
+        // TODO: should still try to resp.json and return the json.message bit.
         throw new Error(`could not create user: ${resp.status}`);
       }
       return resp.json().then((respJson) => {
-        if (respJson.Ok && respJson.Ok.uuid) {
-          return respJson.Ok;
+        if (respJson && respJson.uuid) {
+          return respJson;
         }
-        throw new Error(`could not create user: ${respJson.Err}`);
+        throw new Error(`malformed json: ${respJson}`);
       });
     });
   }

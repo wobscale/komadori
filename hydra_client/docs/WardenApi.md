@@ -34,7 +34,7 @@ Optional parameters are passed through a map[string]interface{}.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **id** | **String**| The id of the group to modify. | 
- **body** | [**GroupMembers**](GroupMembers.md)|  | 
+ **group_members** | [**GroupMembers**](GroupMembers.md)|  | 
 
 ### Return type
 
@@ -69,7 +69,7 @@ Optional parameters are passed through a map[string]interface{}.
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | [**Group**](Group.md)|  | 
+ **group** | [**Group**](Group.md)|  | 
 
 ### Return type
 
@@ -109,7 +109,7 @@ Name | Type | Description  | Notes
 
 ### HTTP request headers
 
- - **Content-Type**: application/json
+ - **Content-Type**: Not defined
  - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
@@ -132,7 +132,7 @@ Optional parameters are passed through a map[string]interface{}.
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | [**WardenAccessRequest**](WardenAccessRequest.md)|  | 
+ **warden_access_request** | [**WardenAccessRequest**](WardenAccessRequest.md)|  | 
 
 ### Return type
 
@@ -167,7 +167,7 @@ Optional parameters are passed through a map[string]interface{}.
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | [**WardenTokenAccessRequest**](WardenTokenAccessRequest.md)|  | 
+ **warden_token_access_request** | [**WardenTokenAccessRequest**](WardenTokenAccessRequest.md)|  | 
 
 ### Return type
 
@@ -207,7 +207,7 @@ Name | Type | Description  | Notes
 
 ### HTTP request headers
 
- - **Content-Type**: application/json
+ - **Content-Type**: Not defined
  - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
@@ -244,7 +244,7 @@ Name | Type | Description  | Notes
 
 ### HTTP request headers
 
- - **Content-Type**: application/json
+ - **Content-Type**: Not defined
  - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
@@ -269,7 +269,7 @@ Optional parameters are passed through a map[string]interface{}.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **id** | **String**| The id of the group to modify. | 
- **body** | [**GroupMembers**](GroupMembers.md)|  | 
+ **group_members** | [**GroupMembers**](GroupMembers.md)|  | 
 
 ### Return type
 

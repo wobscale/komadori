@@ -1,9 +1,17 @@
+
+
 matrix:
   include:
   - language: rust
+    sudo: required
+    services:
+      - docker
     rust: nightly
+    script:
+    - docker run -v /usr/local/bin:/target jpetazzo/nsenter@sha256:a30e7da907a9abb715027677c21468005beee06251b7737c86f84fa148d572b0 # hack nsenter installer
+    - DEBUG=true ./run-tests.sh
   - language: node_js
     node_js:
     - node
     script:
-    - cd frontend && npm install && npm run build && npm test && npm run lint
+    - cd frontend && npm install && npm run build-css && npm run build && npm test && npm run lint

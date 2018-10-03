@@ -1,0 +1,197 @@
+@charset "utf-8";
+
+body {
+    // max-width: 70ch;
+    margin: 5em;
+    font-size: 14pt;
+    line-height: 1.5714;
+    font-family: "Lato", sans-serif;
+    font-variant-ligatures: none;
+    display: flex;
+    align-items: center;
+
+    @media screen and (max-width: 767px) {
+        margin: 1em;
+        font-size: 12pt;
+    }
+}
+#root {
+    width: 100%;
+}
+
+.wrapper {
+    display: flex;
+    flex-flow: column wrap;
+}
+
+.main-content {
+    display: flex;
+    flex-flow: row wrap;
+}
+
+.main {
+    padding-left: 50px;
+    min-width: 400px;
+    flex: 2 0px;
+    order: 2;
+}
+
+.leftbar {
+    order: 1;
+    ul {
+        list-style: none;
+    }
+}
+
+.topbar {
+    ul {
+        list-style: none;
+        display: flex;
+    }
+
+    .center-topbar {
+        margin-left: auto;
+        margin-right: auto;
+        padding: 0 30px;
+    }
+
+    // Some parts borrowed from https://github.com/jgthms/bulma/blob/1083f017a06b44d6f1e315de2b384798e69aeb35/css/bulma.css#L5368
+    .dropdown {
+        display: inline-flex;
+        position: relative;
+        vertical-align: top;
+    }
+
+    .dropdown.is-active .dropdown-menu, .dropdown.is-hoverable:hover .dropdown-menu {
+        display: block;
+    }
+
+    .dropdown.is-right .dropdown-menu {
+        left: auto;
+        right: 0;
+    }
+
+    .dropdown.is-up .dropdown-menu {
+        bottom: 100%;
+        padding-bottom: 4px;
+        padding-top: initial;
+        top: auto;
+    }
+
+    .dropdown-menu {
+        display: none;
+        left: 0;
+        min-width: 12rem;
+        padding-top: 4px;
+        position: absolute;
+        top: 100%;
+        z-index: 20;
+    }
+
+    .dropdown-content {
+        border-radius: 4px;
+        box-shadow: 0 2px 3px rgba(10, 10, 10, 0.1), 0 0 0 1px rgba(10, 10, 10, 0.1);
+        padding-bottom: 0.5rem;
+        padding-top: 0.5rem;
+    }
+
+    .dropdown-item {
+        color: #4a4a4a;
+        display: block;
+        font-size: 0.875rem;
+        line-height: 1.5;
+        padding: 0.375rem 1rem;
+        position: relative;
+    }
+
+    a {
+        text-decoration: none;
+        padding-right: 3rem;
+        white-space: nowrap;
+    }
+
+    a:hover {
+        background-color: whitesmoke;
+        color: #0a0a0a;
+    }
+
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: "Rubik", sans-serif;
+    font-weight: 400;
+}
+
+a {
+    text-decoration: underline;
+    color: rgb(0, 98, 155);
+}
+
+header {
+    h1 a img {
+        display: block;
+        width: 232px;
+        height: 39px;
+    }
+
+    .slogan {
+        font-family: "Rubik", sans-serif;
+        font-size: larger;
+    }
+}
+
+dl {
+    dt {
+        font-weight: bold;
+        display: inline-block;
+        min-width: 10ch;
+    }
+
+    dd {
+        display: inline;
+        margin: 0;
+
+        &:after {
+            display: block;
+            content: '';
+            margin-bottom: .75em;
+        }
+    }
+}
+
+footer {
+    font-size: smaller;
+    margin-top: 2rem;
+}
+
+@mixin font($path, $family, $weight, $style) {
+    @font-face {
+        font-family: $family;
+        font-weight: $weight;
+        font-style: $style;
+        src: url($path + ".woff2") format("woff2"),
+             url($path + ".woff") format("woff");
+    }
+}
+
+/*!
+ * Rubik
+ * Copyright 2015 The Rubik Project Authors (https://github.com/googlefonts/rubik),
+ *
+ * This Font Software is licensed under the SIL Open Font License, Version 1.1.    
+ * This license can be found at: fonts/rubik/OFL.txt or http://scripts.sil.org/OFL
+ */
+@include font("fonts/rubik/rubik-v7-latin-ext_latin-regular", "Rubik", 400, normal);
+
+/*!
+ * Lato
+ * Copyright (c) 2010-2015, Łukasz Dziedzic (dziedzic@typoland.com),
+ * with Reserved Font Name Lato.
+ *
+ * This Font Software is licensed under the SIL Open Font License, Version 1.1.    
+ * This license can be found at: fonts/lato/OFL.txt or http://scripts.sil.org/OFL
+ */
+@include font("fonts/lato/lato-v14-latin-ext_latin-regular", "Lato", 400, normal);
+@include font("fonts/lato/lato-v14-latin-ext_latin-italic", "Lato", 400, italic);
+@include font("fonts/lato/lato-v14-latin-ext_latin-700", "Lato", 700, normal);
+@include font("fonts/lato/lato-v14-latin-ext_latin-700italic", "Lato", 700, italic);

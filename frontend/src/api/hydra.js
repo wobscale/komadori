@@ -8,8 +8,8 @@ class HydraAPI {
       credentials: 'include',
       method: 'GET',
     }).then(resp => resp.json()).then((resp) => {
-      if (resp.Ok && resp.Ok.client) {
-        return resp.Ok;
+      if (resp && resp.client) {
+        return resp;
       }
 
       throw new Error('Invalid consent response, did not include client');
@@ -26,7 +26,7 @@ class HydraAPI {
       headers: { 'content-type': 'application/json' },
       credentials: 'include',
       method: 'POST',
-    }).then(resp => resp.json()).then(resp => resp.Ok);
+    }).then(resp => resp.json());
   }
 
   static rejectConsent(id, reason) {
@@ -39,7 +39,7 @@ class HydraAPI {
       headers: { 'content-type': 'application/json' },
       credentials: 'include',
       method: 'POST',
-    }).then(resp => resp.json()).then(resp => resp.Ok);
+    }).then(resp => resp.json());
   }
 }
 

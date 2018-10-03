@@ -16,7 +16,7 @@ class AdminAPI {
       }
       return resp.json();
     }).then((resp) => {
-      if (resp.Ok) {
+      if (resp) {
         return {};
       } else if (resp.status) {
         throw new Error(`Error status: ${resp.message}`);
@@ -24,6 +24,20 @@ class AdminAPI {
         throw new Error('unrecognized status');
       }
     });
+  }
+
+  static listUsers() {
+    return fetch(`${config.api}/admin/users`, {
+      method: 'GET',
+      headers: { 'content-type': 'application/json' },
+      credentials: 'include',
+      mode: 'cors',
+    }).then((resp) => {
+      if (!resp.ok) {
+        throw new Error(`admin listusers error: ${resp.status}`);
+      }
+      return resp.json();
+    }).then(resp => resp.users);
   }
 }
 

@@ -1,16 +1,13 @@
-use schema::*;
+use db::schema::*;
+use uuid::Uuid;
 
 #[derive(Insertable)]
-#[table_name = "users"]
-pub struct NewUser<'a> {
-    pub username: &'a str,
-    pub email: &'a str,
+#[table_name = "groups"]
+pub struct NewGroup {
+    pub name: String,
+    pub uuid: Uuid,
+    pub public: bool,
+    pub description: String,
 }
 
-#[derive(Insertable)]
-#[table_name = "github_accounts"]
-pub struct NewGithubAccount<'a> {
-    pub id: i32,
-    pub user_id: i32,
-    pub access_token: &'a str,
-}
+

@@ -135,18 +135,25 @@ export function doRejectConsent(id, reason) {
 
 export function doHandleAuth(provider, providerInfo) {
   return (dispatch) => {
-    UserApi.auth(provider, providerInfo.code, providerInfo.state)
-      .then((resp) => {
-        if (resp.type === 'PartialUser') {
-          // Needs to create an account
-          dispatch(receivePartialUser(resp));
-        } else if (resp.type === 'UserResp') {
-          dispatch(receiveUser(resp));
-        }
-      })
-      .catch((e) => {
-        console.error(e);
-      });
+    switch (provider) {
+      case 'github':
+      case 'local':
+        UserApi.userAuth(provider, providerInfo.code, providerInfo.state)
+          .then((resp) => {
+            if (resp.type === 'PartialUser') {
+              // Needs to create an account
+              dispatch(receivePartialUser(resp));
+            } else if (resp.type === 'UserResp') {
+              dispatch(receiveUser(resp));
+            }
+          })
+          .catch((e) => {
+            console.error('error making handle auth request', e);
+          });
+        break;
+      default:
+        alert('Provider not recognized in handle auth; pls file a bug complaining about this');
+    }
   };
 }
 
@@ -175,17 +182,26 @@ export function doGetConsentInfo(id) {
 }
 
 export const ADMIN_BOOTSTRAPPED = 'ADMIN_BOOTSTRAPPED';
-export function adminBootstrapped() {
-  return {
-    type: ADMIN_BOOTSTRAPPED,
-  };
-}
 
 export function doBootstrapAdmin(token) {
   return (dispatch) => {
     AdminAPI.bootstrap(token)
       .then(() => {
-        dispatch(adminBootstrapped());
+        dispatch({ type: ADMIN_BOOTSTRAPPED });
+      })
+      .catch((e) => {
+        // TODO
+        console.error(e);
+      });
+  };
+}
+
+export const ADMIN_USER_LIST = 'ADMIN_USER_LIST';
+export function doAdminListUsers() {
+  return (dispatch) => {
+    AdminAPI.listUsers()
+      .then((users) => {
+        dispatch({ type: ADMIN_USER_LIST, data: users });
       })
       .catch((e) => {
         // TODO

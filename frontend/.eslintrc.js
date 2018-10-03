@@ -19,5 +19,7 @@ module.exports = {
         "func-names": "off",
         "react/forbid-prop-types": "off",
         "jsx-a11y/anchor-is-valid": "off", // gets mad at '<Link to=' even though that's fine
+        "no-console": "off",
+        "no-alert": "off",
     },
 };

@@ -1,18 +1,17 @@
 use constant_time_eq;
-use hydra_client;
-use multi_reactor_drifting::{Handle, Future};
-use futures;
-use futures::Future as PastPerfect;
 use rand::Rng;
 use rand;
-use rocket::State;
+use db;
 use rocket;
+use rocket::Outcome;
+use rocket::http::Status;
+use rocket::request::{FromRequest, Request};
 use rocket_contrib::json::Json;
 
-use errors::Error;
-use hydra;
+use errors::{Error, JsonResult};
 use permissions;
-use user_routes::User;
+use types::UserResp;
+use types::CookieUser;
 
 lazy_static! {
     static ref BOOTSTRAP_TOKEN: String = rand::thread_rng()
@@ -21,11 +20,15 @@ lazy_static! {
         .collect();
 }
 
+// only needed for tests
+pub(crate) fn bootstrap_token() -> String {
+    (*BOOTSTRAP_TOKEN).clone()
+}
 
 pub fn routes() -> Vec<rocket::Route> {
     // Error level so it's always visible
-    error!("admin bootstrap token: {}", *BOOTSTRAP_TOKEN);
-    routes![bootstrap_admin]
+    error!("admin bootstrap token: {}", bootstrap_token());
+    routes![bootstrap_admin, list_users]
 }
 
 #[derive(Deserialize)]
@@ -40,19 +43,86 @@ pub struct BootstrapAdminReq {
 // TODO: conceivably this should be only usable if the admin group is empty
 #[post("/admin/bootstrap", format = "application/json", data = "<req>")]
 pub fn bootstrap_admin(
-    user: User,
-    hydra: State<hydra::client::ClientBuilder>,
-    handle: Handle,
+    conn: db::Conn,
+    user: CookieUser,
     req: Json<BootstrapAdminReq>,
-) -> Future<Json<()>, Json<Error>> {
+) -> JsonResult<()> {
+    let user = user.0;
     if !constant_time_eq::constant_time_eq(req.token.as_bytes(), (*BOOTSTRAP_TOKEN).as_bytes()) {
-        return Future(Box::new(futures::future::err(Json(Error::client_error("invalid bootstrap token".to_string())))));
+        return Err(Error::client_error("invalid bootstrap token".to_string())).into();
     }
-    let client = hydra.build(&(handle.into()));
-    let uuidstr = user.uuid.simple().to_string();
-    Future(Box::new(client.client().warden_api().add_members_to_group(permissions::ADMIN_GROUP, hydra_client::models::GroupMembers::new().with_members(vec![uuidstr]))
-        .map(|o| Json(()))
+
+    user.add_group(conn, permissions::admin_group().uuid)
         .map_err(|e| {
-            Json(Error::server_error(format!("error: {:?}", e)))
-        })))
+            Error::server_error(format!("error adding to group: {}", e))
+        })
+        .map(|_| ()).into()
+}
+
+#[derive(Serialize)]
+pub struct ListUsersResp {
+    users: Vec<UserResp>
+}
+
+#[get("/admin/users", format = "application/json")]
+pub fn list_users(
+    conn: db::Conn,
+    _admin: Admin,
+) -> JsonResult<ListUsersResp> {
+    match db::users::User::list(&conn) {
+        Ok(us) => {
+            let resp = us.into_iter().map(|u| {
+                UserResp::new(u, &conn)
+            }).collect::<Result<Vec<_>, _>>();
+
+            match resp {
+                Ok(resp) => Ok(ListUsersResp{users: resp}),
+                Err(e) => Err(Error::server_error(format!("error listing users: {:?}", e))),
+            }
+        }
+        Err(e) => {
+            Err(Error::server_error(format!("error listing users: {:?}", e)))
+        }
+    }.into()
+}
+
+pub struct Admin(CookieUser);
+
+impl<'a, 'r> FromRequest<'a, 'r> for Admin {
+    type Error = ();
+
+    fn from_request(request: &'a Request<'r>) -> rocket::request::Outcome<Self, ()> {
+        let u = match CookieUser::from_request(request) {
+            Outcome::Success(u) => u,
+            Outcome::Forward(f) => {
+                return Outcome::Forward(f);
+            }
+            Outcome::Failure(f) => {
+                return Outcome::Failure(f);
+            }
+        };
+        let db = request.guard::<rocket::State<db::Pool>>()?;
+        let db = match db.get() {
+            Ok(db) => db,
+            Err(e) => {
+                error!("error getting db: {}", e);
+               return Outcome::Failure((Status::InternalServerError, ()));
+            }
+        };
+
+        let groups = match u.0.groups(&*db) {
+            Err(e) => {
+                error!("error getting groups: {:?}", e);
+                return Outcome::Failure((Status::InternalServerError, ()));
+            }
+            Ok(g) => g,
+        };
+
+        for group in groups {
+            if group.uuid == permissions::admin_group().uuid {
+                return Outcome::Success(Admin(u));
+            }
+        }
+        Outcome::Failure((Status::Forbidden, ()))
+    }
 }
